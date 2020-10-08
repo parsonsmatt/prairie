@@ -1,7 +1,10 @@
 -- | This module contains a utility for diffing two records.
 --
 -- @since 0.0.1.0
-module Prairie.Diff where
+module Prairie.Diff
+  ( module Prairie.Diff
+  , module Prairie.Update
+  ) where
 
 import Prairie.Update
 import Prairie.Class
