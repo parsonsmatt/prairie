@@ -3,10 +3,11 @@
 -- @since 0.0.1.0
 module Prairie.Update where
 
-import Prairie.Class
-import Data.Aeson
+import Data.Aeson (ToJSON(..), FromJSON(..), object, withObject, (.:), (.=))
 import Control.Lens (set)
-import Data.Typeable
+import Data.Typeable (Typeable, (:~:)(..), eqT)
+
+import Prairie.Class
 
 -- | An operation representing an update against the 'rec' in question.
 --

@@ -3,14 +3,14 @@
 -- @since 0.0.1.0
 module Prairie.TH where
 
-import Data.Constraint
+import Data.Constraint (Dict(..))
 import Language.Haskell.TH
-import Prairie.Class
-import GHC.Generics
-import Control.Lens
+import Control.Lens (lens)
 import qualified Data.List as List
-import Data.Traversable
-import Data.Char
+import Data.Traversable (for)
+import Data.Char (toUpper, toLower)
+
+import Prairie.Class
 
 -- | Create an instance of the 'Record' type class.
 --
@@ -100,9 +100,6 @@ mkRecord u = do
         pure $ map (\(n, _b, t) -> (n, t)) varBangTypes
       _ ->
         fail "only supports records"
-
-  isGeneric <-
-    isInstance (''Generic) [ConT typeName]
 
   let
     mkConstrFieldName fieldName =

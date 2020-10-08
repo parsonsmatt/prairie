@@ -16,17 +16,17 @@
 -- @since 0.0.1.0
 module Prairie.Class where
 
-import Control.Lens
-import Data.Aeson
-import Data.Constraint
-import Data.Kind
+import Control.Lens (Lens', set, view)
+import Data.Aeson (ToJSON(..), FromJSON(..), withText)
+import Data.Constraint (Dict(..))
+import Data.Kind (Constraint, Type)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
-import Data.Typeable
-import GHC.OverloadedLabels
-import GHC.TypeLits
-import Unsafe.Coerce
+import Data.Typeable ((:~:)(..), Typeable, eqT)
+import GHC.OverloadedLabels (IsLabel(..))
+import GHC.TypeLits (Symbol)
+import Unsafe.Coerce (unsafeCoerce)
 
 -- | Instances of this class have a datatype 'Field' which allow you to
 -- represent fields as a concrete datatype. This allows you to have
