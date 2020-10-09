@@ -9,6 +9,7 @@ import Control.Lens (lens)
 import qualified Data.List as List
 import Data.Traversable (for)
 import Data.Char (toUpper, toLower)
+import qualified Data.Text as Text
 
 import Prairie.Class
 
@@ -154,7 +155,17 @@ mkRecord u = do
     fieldName <- newName "fieldName"
     body <- pure $
       CaseE (VarE fieldName)  $
-        flip map names'types $ \(n, _) -> Match (VarP (mkConstrFieldName n)) (NormalB (LitE $ StringL (nameBase (stripTypeName n)))) []
+        flip map names'types $ \(n, _) ->
+          let
+            constrFieldName =
+              mkConstrFieldName n
+            pat =
+              ConP constrFieldName []
+            bdy =
+              AppE (VarE 'Text.pack) $ LitE $ StringL $ nameBase $ stripTypeName n
+
+           in
+            Match pat (NormalB bdy)  []
     pure $
       FunD 'recordFieldLabel
         [ Clause [VarP fieldName] (NormalB body) []
