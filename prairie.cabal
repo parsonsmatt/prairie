@@ -51,7 +51,6 @@ library
     DefaultSignatures
     DeriveGeneric
     DerivingStrategies
-    DerivingVia
     ExplicitForAll
     FlexibleContexts
     FlexibleInstances
