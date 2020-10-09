@@ -71,7 +71,7 @@ instance (FieldDict ToJSON rec, forall a. ToJSON (Field rec a)) => ToJSON (Updat
 --
 --
 -- @since 0.0.1.0
-instance (FieldDict FromJSON  rec, forall a. FromJSON (Field rec a)) => FromJSON (Update rec) where
+instance (FieldDict FromJSON  rec, FieldDict Typeable rec, FromJSON (SomeField rec)) => FromJSON (Update rec) where
   parseJSON = withObject "Update" $ \o -> do
     field <- o .: "field"
     case field of

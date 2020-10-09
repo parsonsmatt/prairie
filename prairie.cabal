@@ -84,4 +84,5 @@ test-suite prairie-test
   build-depends:
       base >=4.7 && <5
     , prairie
+    , aeson
   default-language: Haskell2010

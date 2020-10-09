@@ -26,7 +26,6 @@ import Data.Text (Text)
 import Data.Typeable ((:~:)(..), Typeable, eqT)
 import GHC.OverloadedLabels (IsLabel(..))
 import GHC.TypeLits (Symbol)
-import Unsafe.Coerce (unsafeCoerce)
 
 -- | Instances of this class have a datatype 'Field' which allow you to
 -- represent fields as a concrete datatype. This allows you to have
@@ -193,8 +192,13 @@ instance (forall a. ToJSON (Field rec a)) => ToJSON (SomeField rec) where
 -- the given field.
 --
 -- @since 0.0.1.0
-instance (forall a. FromJSON (Field rec a)) => FromJSON (SomeField rec) where
-  parseJSON = fmap SomeField . parseJSON
+instance (Record rec) => FromJSON (SomeField rec) where
+  parseJSON = withText "Field" $ \txt ->
+    case Map.lookup txt (fieldMap @rec) of
+      Just field ->
+        pure field
+      Nothing ->
+        fail "Field not"
 
 -- | This delegates to 'recordFieldLabel'  from the 'Record' class.
 --
@@ -206,12 +210,16 @@ instance Record rec => ToJSON (Field rec a) where
 -- 'recordFieldLabel'.
 --
 -- @since 0.0.1.0
-instance (Record rec) => FromJSON (Field rec a) where
+instance (Record rec, FieldDict Typeable rec, Typeable a) => FromJSON (Field rec a) where
   parseJSON = withText "Field" $ \txt ->
     case Map.lookup txt (fieldMap @rec) of
-      Just (SomeField a) ->
-        -- So this is, like, probably safe.
-        unsafeCoerce a
+      Just (SomeField (a :: Field rec b)) ->
+        withFieldDict @Typeable a $
+        case eqT @a @b of
+          Just Refl ->
+            pure a
+          Nothing ->
+            fail "types not same???"
       Nothing ->
         fail "Field not"
 
