@@ -94,10 +94,10 @@ mkRecord u = do
           Just xs -> mkName (lowerFirst xs)
           Nothing -> n
 
-  names'types <-
+  (recordCon, names'types) <-
     case con of
-      RecC _conName varBangTypes ->
-        pure $ map (\(n, _b, t) -> (n, t)) varBangTypes
+      RecC conName varBangTypes ->
+        pure $ (conName, map (\(n, _b, t) -> (n, t)) varBangTypes)
       _ ->
         fail "only supports records"
 
@@ -136,6 +136,30 @@ mkRecord u = do
       (VarP 'allFields)
       (NormalB $ ListE (map (AppE (ConE 'SomeField) . ConE . fst) fieldConstructors))
       []
+
+  mkTabulateRecord <- do
+    fromFieldName <- newName "fromField"
+    body <- pure $
+      RecConE recordCon $
+        map
+          (\(n, _) -> (n, VarE fromFieldName `AppE` ConE (mkConstrFieldName n)))
+          names'types
+
+    pure $
+      FunD 'tabulateRecord
+        [ Clause [VarP fromFieldName] (NormalB body) []
+        ]
+
+  mkRecordFieldLabel <- do
+    fieldName <- newName "fieldName"
+    body <- pure $
+      CaseE (VarE fieldName)  $
+        flip map names'types $ \(n, _) -> Match (VarP (mkConstrFieldName n)) (NormalB (LitE $ StringL (nameBase (stripTypeName n)))) []
+    pure $
+      FunD 'recordFieldLabel
+        [ Clause [VarP fieldName] (NormalB body) []
+        ]
+
   let
     fieldConstrs =
       map mkFieldConstr fieldConstructors
@@ -161,6 +185,8 @@ mkRecord u = do
               []
           , recordFieldLensDec
           , mkAllFields
+          , mkTabulateRecord
+          , mkRecordFieldLabel
           ]
         )
 
