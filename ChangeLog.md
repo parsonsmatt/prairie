@@ -3,5 +3,5 @@
 ## 0.0.2.0
 
 - []()
-    - Add `tabulateA` to `Record` class. `tabulate` is now a normal function.
+    - Add `tabulateRecordA` to `Record` class. `tabulate` is now a normal function.
     
