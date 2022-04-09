@@ -140,14 +140,18 @@ mkRecord u = do
 
   mkTabulateRecord <- do
     fromFieldName <- newName "fromField"
-    body <- pure $
-      RecConE recordCon $
-        map
-          (\(n, _) -> (n, VarE fromFieldName `AppE` ConE (mkConstrFieldName n)))
-          names'types
+    let body =
+            List.foldl'
+                (\acc (n, _) ->
+                    VarE '(<*>)
+                        `AppE` acc
+                        `AppE` (VarE fromFieldName `AppE` ConE (mkConstrFieldName n))
+                )
+                (VarE 'pure `AppE` ConE recordCon)
+                names'types
 
     pure $
-      FunD 'tabulateRecord
+      FunD 'tabulateRecordA
         [ Clause [VarP fromFieldName] (NormalB body) []
         ]
 

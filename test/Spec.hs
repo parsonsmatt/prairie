@@ -1,4 +1,4 @@
-{-# language TypeApplications, StandaloneDeriving, ConstraintKinds, TemplateHaskell, DataKinds, OverloadedStrings, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeFamilies, GADTs #-}
+{-# language LambdaCase, TypeApplications, StandaloneDeriving, ConstraintKinds, TemplateHaskell, DataKinds, OverloadedStrings, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeFamilies, GADTs #-}
 module Main where
 
 import Prairie
@@ -20,17 +20,33 @@ assert message success = unless success (error message)
 
 main :: IO ()
 main = do
-  assert "getField" $ getRecordField UserName example == "Alice"
-  assert "setField" $ setRecordField UserAge 32 example == User "Alice" 32
-  assert "label" $ recordFieldLabel UserAge == "age"
-  assert "label" $ recordFieldLabel UserName == "name"
+    assert "getField" $ getRecordField UserName example == "Alice"
+    assert "setField" $ setRecordField UserAge 32 example == User "Alice" 32
+    assert "label" $ recordFieldLabel UserAge == "age"
+    assert "label" $ recordFieldLabel UserName == "name"
 
-  assert "update json" $
-    encode (diffRecord example (setRecordField UserName "Bob" example))
-    ==
-    "[{\"field\":\"name\",\"value\":\"Bob\"}]"
+    assert "update json" $
+        encode (diffRecord example (setRecordField UserName "Bob" example))
+        ==
+        "[{\"field\":\"name\",\"value\":\"Bob\"}]"
 
-  assert "decode update" $
-    decode "[{\"field\":\"name\",\"value\":\"Bob\"}]"
-    ==
-    Just [SetField UserName "Bob"]
+    assert "decode update" $
+      decode "[{\"field\":\"name\",\"value\":\"Bob\"}]"
+      ==
+      Just [SetField UserName "Bob"]
+
+    user' <-
+      tabulateRecordA $ \case
+          UserName ->
+              print 10 >> pure "Matt"
+          UserAge ->
+              print 20 >> pure 33
+    assert "tabulateRecordA" $
+        user'
+        ==
+        User
+            { name = "Matt"
+            , age = 33
+            }
+
+
