@@ -252,7 +252,7 @@ upperFirst, lowerFirst :: String -> String
 upperFirst = overFirst toUpper
 lowerFirst = overFirst toLower
 
-#if MIN_VERSION_template_haskell(2,17,0)
+#if MIN_VERSION_template_haskell(2,18,0)
 _ConP :: Name ->  [Pat] -> Pat
 _ConP n = ConP n []
 #else
