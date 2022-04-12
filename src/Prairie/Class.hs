@@ -16,13 +16,14 @@
 -- @since 0.0.1.0
 module Prairie.Class where
 
-import Control.Lens (Lens', set, view, Identity(..))
+import Control.Lens (Lens', set, view, Identity(..), Const(..))
 import Data.Aeson (ToJSON(..), FromJSON(..), withText)
 import Data.Constraint (Dict(..))
 import Data.Kind (Constraint, Type)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Typeable ((:~:)(..), Typeable, eqT)
 import GHC.OverloadedLabels (IsLabel(..))
 import GHC.TypeLits (Symbol)
@@ -79,21 +80,6 @@ class Record rec where
     -- @since 0.0.1.0
     recordFieldLens :: Field rec ty -> Lens' rec ty
 
-    -- | An enumeration of fields on the record.
-    --
-    -- This value uses the 'SomeField' existential wrapper, which allows
-    -- 'Field's containing different types to be in the same list.
-    --
-    -- Our @User@ example would have this implementation:
-    --
-    -- @
-    -- allFields = [SomeField UserAge, SomeField UserName]
-    -- @
-    --
-    -- @since 0.0.1.0
-    allFields :: [SomeField rec]
-
-
     -- |  Construct a 'Record' by providing an 'Applicative' action
     -- returning a value for each 'Field' on the 'Record'.
     --
@@ -106,8 +92,26 @@ class Record rec where
     -- serialization concerns. For derserializing a 'Field', consider using
     -- @'fieldMap' :: 'Map' 'Text' ('SomeField' rec)@.
     --
+    -- Record field labels can be given a @stock@ derived 'Show' instance,
+    -- which works for the default implementation of the class.
+    --
     -- @since 0.0.1.0
     recordFieldLabel :: Field rec ty -> Text
+    default recordFieldLabel :: Show (Field rec ty) => Field rec ty -> Text
+    recordFieldLabel = Text.pack . show
+
+-- | An enumeration of fields on the record.
+--
+-- This value builds the fields using 'tabulateRecordA' and the 'Const'
+-- type.
+--
+-- As of @0.0.2.0,@ this is an ordinary top-level function and not a class
+-- member.
+--
+-- @since 0.0.1.0
+allFields :: Record rec => [SomeField rec]
+allFields = getConst $ tabulateRecordA $ \field ->
+    Const [SomeField field]
 
 -- | This function allows you to construct a 'Record' by providing
 -- a value for each 'Field' on the record.
