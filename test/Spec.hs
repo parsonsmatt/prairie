@@ -28,8 +28,6 @@ instance Record (T a) where
         TX -> lens x (\o n -> o { x = n })
         TY -> lens y (\o n -> o { y = n })
 
-    allFields = [SomeField TX, SomeField TY]
-
     tabulateRecordA f = T <$> f TX <*> f TY
 
     recordFieldLabel = \case

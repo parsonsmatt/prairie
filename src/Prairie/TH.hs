@@ -134,12 +134,6 @@ mkRecord u = do
     fieldConstructors =
       map (\(n, t) -> (mkConstrFieldName n, t)) names'types
 
-  mkAllFields <- pure $
-    ValD
-      (VarP 'allFields)
-      (NormalB $ ListE (map (AppE (ConE 'SomeField) . ConE . fst) fieldConstructors))
-      []
-
   mkTabulateRecord <- do
     fromFieldName <- newName "fromField"
     let body =
@@ -201,7 +195,6 @@ mkRecord u = do
               fieldConstrs
               []
           , recordFieldLensDec
-          , mkAllFields
           , mkTabulateRecord
           , mkRecordFieldLabel
           ]
