@@ -1,3 +1,7 @@
+dist-newstyle/
 .stack-work/
 *~
+<<<<<<< HEAD
 dist-newstyle/
+=======
+>>>>>>> master

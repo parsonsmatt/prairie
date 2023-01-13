@@ -117,7 +117,7 @@ mkRecord u = do
 
         pure $
           Match
-            (_ConP (mkConstrFieldName fieldName) [])
+            (compatConP (mkConstrFieldName fieldName))
             (NormalB $
             VarE 'lens
             `AppE` VarE fieldName
@@ -166,7 +166,7 @@ mkRecord u = do
             constrFieldName =
               mkConstrFieldName n
             pat =
-              _ConP constrFieldName []
+                compatConP constrFieldName
             bdy =
               AppE (VarE 'Text.pack) $ LitE $ StringL $ nameBase $ stripTypeName n
 
@@ -219,7 +219,7 @@ mkRecord u = do
       fieldDictBody =
         CaseE (VarE fieldVar) $ map mkFieldDictMatches fieldConstructors
       mkFieldDictMatches (name, _type) =
-        Match (_ConP name []) (NormalB (ConE 'Dict)) []
+        Match (compatConP name) (NormalB (ConE 'Dict)) []
 
     pure $
       InstanceD
@@ -252,10 +252,11 @@ upperFirst, lowerFirst :: String -> String
 upperFirst = overFirst toUpper
 lowerFirst = overFirst toLower
 
+compatConP :: Name -> Pat
 #if MIN_VERSION_template_haskell(2,18,0)
-_ConP :: Name ->  [Pat] -> Pat
-_ConP n = ConP n []
+compatConP constrFieldName =
+    ConP constrFieldName [] []
 #else
-_ConP :: Name -> [Pat] -> Pat
-_ConP = ConP
+compatConP constrFieldName =
+    ConP constrFieldName []
 #endif

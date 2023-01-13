@@ -7,6 +7,7 @@ on:
     types:
       - opened
       - synchronize
+<<<<<<< HEAD
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,15 +18,15 @@ jobs:
     env:
       CONFIG: "--enable-tests"
     steps:
-      - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v1
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
         id: setup-haskell-cabal
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ matrix.cabal }}
       - run: cabal v2-update
       - run: cabal v2-freeze $CONFIG
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ${{ steps.setup-haskell-cabal.outputs.cabal-store }}

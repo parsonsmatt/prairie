@@ -35,7 +35,7 @@ library
     , constraints
     , containers
     , lens
-    , template-haskell  >= 2.15 && < 2.19
+    , template-haskell  >= 2.15 && < 2.20
     , text
 
   other-modules:
