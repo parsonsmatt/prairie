@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Helpers for generating instances of the 'Record' type class.
 --
 -- @since 0.0.1.0
@@ -115,7 +117,7 @@ mkRecord u = do
 
         pure $
           Match
-            (ConP (mkConstrFieldName fieldName) [])
+            (compatConP (mkConstrFieldName fieldName))
             (NormalB $
             VarE 'lens
             `AppE` VarE fieldName
@@ -160,7 +162,7 @@ mkRecord u = do
             constrFieldName =
               mkConstrFieldName n
             pat =
-              ConP constrFieldName []
+                compatConP constrFieldName
             bdy =
               AppE (VarE 'Text.pack) $ LitE $ StringL $ nameBase $ stripTypeName n
 
@@ -213,7 +215,7 @@ mkRecord u = do
       fieldDictBody =
         CaseE (VarE fieldVar) $ map mkFieldDictMatches fieldConstructors
       mkFieldDictMatches (name, _type) =
-        Match (ConP name []) (NormalB (ConE 'Dict)) []
+        Match (compatConP name) (NormalB (ConE 'Dict)) []
 
     pure $
       InstanceD
@@ -245,3 +247,12 @@ overFirst f str =
 upperFirst, lowerFirst :: String -> String
 upperFirst = overFirst toUpper
 lowerFirst = overFirst toLower
+
+compatConP :: Name -> Pat
+#if MIN_VERSION_template_haskell(2,18,0)
+compatConP constrFieldName =
+    ConP constrFieldName [] []
+#else
+compatConP constrFieldName =
+    ConP constrFieldName []
+#endif
