@@ -7,30 +7,25 @@ on:
     types:
       - opened
       - synchronize
-env:
-  CONFIG: "--enable-tests --enable-benchmarks "
 jobs:
   build:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
-      fail-fast: false
       matrix:
-        ghc: ["8.8.4", "8.10.4", "9.0.2", "9.2.4", "9.4.2"]
-        experimental: [false]
-          #         include:
-          # - ghc: "head"
-          #   experimental: true
+        cabal: ["3.6"]
+        ghc: ["8.8.4", "8.10.7", "9.0.2", "9.2.5", "9.4.4"]
+    env:
+      CONFIG: "--enable-tests"
     steps:
-      - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v1
+      - uses: actions/checkout@v3
+      - uses: haskell/actions/setup@v2
         id: setup-haskell-cabal
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ matrix.cabal }}
       - run: cabal v2-update
       - run: cabal v2-freeze $CONFIG
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
@@ -40,11 +35,6 @@ jobs:
             ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             ${{ runner.os }}-${{ matrix.ghc }}-
       - run: cabal v2-build --disable-optimization -j $CONFIG
-        continue-on-error: ${{ matrix.experimental }}
-      - run: cabal v2-test --disable-optimization -j $CONFIG --test-options "--fail-on-focus"
-        continue-on-error: ${{ matrix.experimental }}
-      - if: ${{ matrix.ghc != '8.6.5' }}
-        continue-on-error: ${{ matrix.experimental }}
-        run: cabal v2-haddock -j $CONFIG
+      - run: cabal v2-test --disable-optimization -j $CONFIG
+      - run: cabal v2-haddock -j $CONFIG
       - run: cabal v2-sdist
-        continue-on-error: ${{ matrix.experimental }}

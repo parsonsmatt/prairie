@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# language CPP #-}
 
 -- | Helpers for generating instances of the 'Record' type class.
 --
@@ -134,22 +134,20 @@ mkRecord u = do
     fieldConstructors =
       map (\(n, t) -> (mkConstrFieldName n, t)) names'types
 
-  mkAllFields <- pure $
-    ValD
-      (VarP 'allFields)
-      (NormalB $ ListE (map (AppE (ConE 'SomeField) . ConE . fst) fieldConstructors))
-      []
-
   mkTabulateRecord <- do
     fromFieldName <- newName "fromField"
-    body <- pure $
-      RecConE recordCon $
-        map
-          (\(n, _) -> (n, VarE fromFieldName `AppE` ConE (mkConstrFieldName n)))
-          names'types
+    let body =
+            List.foldl'
+                (\acc (n, _) ->
+                    VarE '(<*>)
+                        `AppE` acc
+                        `AppE` (VarE fromFieldName `AppE` ConE (mkConstrFieldName n))
+                )
+                (VarE 'pure `AppE` ConE recordCon)
+                names'types
 
     pure $
-      FunD 'tabulateRecord
+      FunD 'tabulateRecordA
         [ Clause [VarP fromFieldName] (NormalB body) []
         ]
 
@@ -197,7 +195,6 @@ mkRecord u = do
               fieldConstrs
               []
           , recordFieldLensDec
-          , mkAllFields
           , mkTabulateRecord
           , mkRecordFieldLabel
           ]

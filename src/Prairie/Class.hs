@@ -16,13 +16,14 @@
 -- @since 0.0.1.0
 module Prairie.Class where
 
-import Control.Lens (Lens', set, view)
+import Control.Lens (Lens', set, view, Identity(..), Const(..))
 import Data.Aeson (ToJSON(..), FromJSON(..), withText)
 import Data.Constraint (Dict(..))
 import Data.Kind (Constraint, Type)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Typeable ((:~:)(..), Typeable, eqT)
 import GHC.OverloadedLabels (IsLabel(..))
 import GHC.TypeLits (Symbol)
@@ -33,90 +34,109 @@ import GHC.TypeLits (Symbol)
 --
 -- @since 0.0.1.0
 class Record rec where
-  -- | A datatype representing fields on the record.
-  --
-  -- This will be a @GADT@ with one constructor for each record field. By
-  -- convention, it's best to name the constructors as with the type name
-  -- leading and the field name following. This convention prevents any
-  -- possible conflicts from different instances of 'Field'.
-  --
-  -- Using our example type @User@, we would define this as:
-  --
-  -- @
-  -- data Field User ty where
-  --   UserName :: Field User String
-  --   UserAge :: Field User Int
-  -- @
-  --
-  -- Now, we have a value @UserName@ that corresponds with the @name@ field
-  -- on a @User@. The type of @User@ and @name@ are interesting to compare:
-  --
-  -- @
-  -- UserName :: Field User    String
-  -- name     ::       User -> String
-  -- @
-  --
-  -- @since 0.0.1.0
-  data Field rec :: Type -> Type
+    -- | A datatype representing fields on the record.
+    --
+    -- This will be a @GADT@ with one constructor for each record field. By
+    -- convention, it's best to name the constructors as with the type name
+    -- leading and the field name following. This convention prevents any
+    -- possible conflicts from different instances of 'Field'.
+    --
+    -- Using our example type @User@, we would define this as:
+    --
+    -- @
+    -- data Field User ty where
+    --   UserName :: Field User String
+    --   UserAge :: Field User Int
+    -- @
+    --
+    -- Now, we have a value @UserName@ that corresponds with the @name@ field
+    -- on a @User@. The type of @User@ and @name@ are interesting to compare:
+    --
+    -- @
+    -- UserName :: Field User    String
+    -- name     ::       User -> String
+    -- @
+    --
+    -- @since 0.0.1.0
+    data Field rec :: Type -> Type
 
-  -- | Given a 'Field' on the record, this function acts as a 'Lens'' into
-  -- the record. This allows you to use a 'Field' as a getter or setter.
-  --
-  -- An example implementation for our 'User' type might look like this:
-  --
-  -- @
-  -- recordFieldLens field =
-  --   case field of
-  --     UserName ->
-  --       'lens' name (\\u n -> u { name = n })
-  --     UserAge ->
-  --      'lens' age (\\u a -> u { age = a })
-  -- @
-  --
-  -- If you have derived lenses (either from Template Haskell or
-  -- @generic-lens@, then you can provide those directly.
-  --
-  -- @since 0.0.1.0
-  recordFieldLens :: Field rec ty -> Lens' rec ty
+    -- | Given a 'Field' on the record, this function acts as a 'Lens'' into
+    -- the record. This allows you to use a 'Field' as a getter or setter.
+    --
+    -- An example implementation for our 'User' type might look like this:
+    --
+    -- @
+    -- recordFieldLens field =
+    --   case field of
+    --     UserName ->
+    --       'lens' name (\\u n -> u { name = n })
+    --     UserAge ->
+    --      'lens' age (\\u a -> u { age = a })
+    -- @
+    --
+    -- If you have derived lenses (either from Template Haskell or
+    -- @generic-lens@, then you can provide those directly.
+    --
+    -- @since 0.0.1.0
+    recordFieldLens :: Field rec ty -> Lens' rec ty
 
-  -- | An enumeration of fields on the record.
-  --
-  -- This value uses the 'SomeField' existential wrapper, which allows
-  -- 'Field's containing different types to be in the same list.
-  --
-  -- Our @User@ example would have this implementation:
-  --
-  -- @
-  -- allFields = [SomeField UserAge, SomeField UserName]
-  -- @
-  --
-  -- @since 0.0.1.0
-  allFields :: [SomeField rec]
+    -- |  Construct a 'Record' by providing an 'Applicative' action
+    -- returning a value for each 'Field' on the 'Record'.
+    --
+    -- Example:
+    --
+    -- @
+    -- tabulateRecordA $ \\field -> case field of
+    --     UserName -> Just "Matt"
+    --     UserAge -> Nothing
+    --
+    -- tabulateRecordA $ \\field -> case field of
+    --     UserName -> getLine
+    --     UserAge -> do
+    --         ageStr <- getLine
+    --         case readMaybe ageStr of
+    --             Nothing -> fail $ "Expected Int, got: " <> ageStr
+    --             Just a -> pure a
+    -- @
+    --
+    -- @since 0.0.2.0
+    tabulateRecordA :: Applicative m => (forall ty. Field rec ty -> m ty) -> m rec
 
-  -- | This function allows you to construct a 'Record' by providing
-  -- a value for each 'Field' on the record.
-  --
-  -- Our @User@ would have an implementation like this:
-  --
-  -- @
-  -- tabulateRecord fromField =
-  --   User
-  --     { name = fromField UserName
-  --     , age = fromField UserAge
-  --     }
-  -- @
-  --
-  -- @since 0.0.1.0
-  tabulateRecord :: (forall ty. Field rec ty -> ty) -> rec
+    -- | Assign a 'Text' label for a record 'Field'.
+    --
+    -- This allows 'Field's to be converted to 'Text', which is useful for
+    -- serialization concerns. For derserializing a 'Field', consider using
+    -- @'fieldMap' :: 'Map' 'Text' ('SomeField' rec)@.
+    --
+    -- Record field labels can be given a @stock@ derived 'Show' instance,
+    -- which works for the default implementation of the class.
+    --
+    -- @since 0.0.1.0
+    recordFieldLabel :: Field rec ty -> Text
+    default recordFieldLabel :: Show (Field rec ty) => Field rec ty -> Text
+    recordFieldLabel = Text.pack . show
 
-  -- | Assign a 'Text' label for a record 'Field'.
-  --
-  -- This allows 'Field's to be converted to 'Text', which is useful for
-  -- serialization concerns. For derserializing a 'Field', consider using
-  -- @'fieldMap' :: 'Map' 'Text' ('SomeField' rec)@.
-  --
-  -- @since 0.0.1.0
-  recordFieldLabel :: Field rec ty -> Text
+-- | An enumeration of fields on the record.
+--
+-- This value builds the fields using 'tabulateRecordA' and the 'Const'
+-- type.
+--
+-- As of @0.0.2.0,@ this is an ordinary top-level function and not a class
+-- member.
+--
+-- @since 0.0.1.0
+allFields :: Record rec => [SomeField rec]
+allFields = getConst $ tabulateRecordA $ \field ->
+    Const [SomeField field]
+
+-- | This function allows you to construct a 'Record' by providing
+-- a value for each 'Field' on the record.
+--
+-- As of @0.0.2.0@, this is defined in terms of 'tabulateRecordA'.
+--
+-- @since 0.0.1.0
+tabulateRecord :: Record rec => (forall ty. Field rec ty -> ty) -> rec
+tabulateRecord k = runIdentity (tabulateRecordA (Identity . k))
 
 -- | A mapping from 'Text' record field labels to the corresponding
 -- 'SomeField' for that record.
