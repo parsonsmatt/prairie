@@ -83,6 +83,22 @@ class Record rec where
     -- |  Construct a 'Record' by providing an 'Applicative' action
     -- returning a value for each 'Field' on the 'Record'.
     --
+    -- Example:
+    --
+    -- @
+    -- tabulateRecordA $ \\field -> case field of
+    --     UserName -> Just "Matt"
+    --     UserAge -> Nothing
+    --
+    -- tabulateRecordA $ \\field -> case field of
+    --     UserName -> getLine
+    --     UserAge -> do
+    --         ageStr <- getLine
+    --         case readMaybe ageStr of
+    --             Nothing -> fail $ "Expected Int, got: " <> ageStr
+    --             Just a -> pure a
+    -- @
+    --
     -- @since 0.0.2.0
     tabulateRecordA :: Applicative m => (forall ty. Field rec ty -> m ty) -> m rec
 
