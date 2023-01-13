@@ -7,7 +7,6 @@ on:
     types:
       - opened
       - synchronize
-<<<<<<< HEAD
 jobs:
   build:
     runs-on: ubuntu-latest
