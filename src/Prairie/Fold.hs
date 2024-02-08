@@ -59,6 +59,8 @@ recordToFieldList rec =
 --              val + acc
 --      )
 -- @
+--
+-- @since 0.0.3.0
 foldRecord
     :: forall rec r
      . (Record rec)
@@ -75,6 +77,8 @@ foldRecord k init rec =
         (recordToFieldList rec)
 
 -- | Fold over a 'Record' with a monadic action.
+--
+-- @since 0.0.3.0
 foldMRecord
     :: forall rec m r
      . (Record rec, Monad m)
@@ -92,6 +96,8 @@ foldMRecord k init rec =
 
 -- | Convert each field of a 'Record' into a monoidal value and combine
 -- them together using 'mappend'.
+--
+-- @since 0.0.3.0
 foldMapRecord
     :: forall rec m
     . (Record rec, Monoid m)
