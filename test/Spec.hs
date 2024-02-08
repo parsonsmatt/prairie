@@ -1,23 +1,40 @@
-{-# language PolyKinds, LambdaCase, TypeApplications, RankNTypes, StandaloneDeriving, ConstraintKinds, TemplateHaskell, DataKinds, OverloadedStrings, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeFamilies, GADTs #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-# options_ghc -Wall #-}
+
 module Main where
 
 import Prairie
 
-import Data.Aeson
-import Control.Monad
 import Control.Lens
+import Control.Monad
+import Data.Aeson
 import Data.Kind (Type)
+import Data.Monoid
+import Test.Hspec
 
 data User = User { name :: String, age :: Int }
-  deriving Eq
+  deriving (Show, Eq)
 
 mkRecord ''User
 
 deriving instance Eq (Field User a)
+deriving instance Show (Field User a)
 
-example = User "Alice" 30
+exampleUser = User "Alice" 30
 
 data T a = T { x :: a, y :: Int }
 
@@ -48,44 +65,135 @@ type family FieldLens (a :: Type) (p :: Type) (f :: Type -> Type) where
     FieldLens (Field (t x) x) y f = LensLike f (t x) (t y) x y
     FieldLens (Field (t x) y) y f = LensLike f (t x) (t x) y y
 
-assert :: String -> Bool -> IO ()
-assert message success = unless success (error message)
-
 main :: IO ()
-main = do
-    assert "getField" $ getRecordField UserName example == "Alice"
-    assert "setField" $ setRecordField UserAge 32 example == User "Alice" 32
-    assert "label" $ recordFieldLabel UserAge == "age"
-    assert "label" $ recordFieldLabel UserName == "name"
+main = hspec $ do
+    describe "Prairie" $ do
+        it "getField" $ do
+            getRecordField UserName exampleUser `shouldBe` "Alice"
+        it "setField" $ do
+            setRecordField UserAge 32 exampleUser `shouldBe` User { name = "Alice", age = 32 }
+        it "label" $ do
+            recordFieldLabel UserAge `shouldBe` "age"
+        it "label" $ do
+            recordFieldLabel UserName `shouldBe` "name"
 
-    let t :: T Int
-        t = T 3 2
+        let t :: T Int
+            t = T 3 2
 
-        t' :: T Char
-        t' = t & polyLens TX .~ 'a'
+            t' :: T Char
+            t' = t & polyLens TX .~ 'a'
 
-    assert "update json" $
-        encode (diffRecord example (setRecordField UserName "Bob" example))
-        ==
-        "[{\"field\":\"name\",\"value\":\"Bob\"}]"
+        it "update json" $
+            encode (diffRecord exampleUser (setRecordField UserName "Bob" exampleUser))
+            `shouldBe`
+            "[{\"field\":\"name\",\"value\":\"Bob\"}]"
 
-    assert "decode update" $
-      decode "[{\"field\":\"name\",\"value\":\"Bob\"}]"
-      ==
-      Just [SetField UserName "Bob"]
+        it "decode update" $
+          decode "[{\"field\":\"name\",\"value\":\"Bob\"}]"
+          `shouldBe`
+          Just [SetField UserName "Bob"]
 
-    user' <-
-      tabulateRecordA $ \case
-          UserName ->
-              print 10 >> pure "Matt"
-          UserAge ->
-              print 20 >> pure 33
-    assert "tabulateRecordA" $
-        user'
-        ==
-        User
-            { name = "Matt"
-            , age = 33
-            }
+        it "tabulateRecordA" $ do
+            user' <-
+              tabulateRecordA $ \case
+                  UserName ->
+                      print 10 >> pure "Matt"
+                  UserAge ->
+                      print 20 >> pure 33
+            user'
+                `shouldBe`
+                User
+                    { name = "Matt"
+                    , age = 33
+                    }
+
+        describe "Fold" $ do
+            describe "foldRecord" $ do
+                it "can count the fields" $ do
+                    foldRecord (\_val acc _field -> acc + 1) 0 exampleUser
+                        `shouldBe`
+                            2
+                it "can distinguish fields" $ do
+                    foldRecord
+                        (\val acc field ->
+                            case field of
+                                UserName ->
+                                    length val + acc
+                                UserAge ->
+                                    val + acc
+                        )
+                        (0 :: Int)
+                        exampleUser
+                        `shouldBe`
+                            35
+
+            describe "foldMapRecord" $ do
+                it "can count the fields" $ do
+                    foldMapRecord (\_ _ -> Sum 1) exampleUser
+                        `shouldBe`
+                            Sum 2
+                it "can combine strings" $ do
+                    foldMapRecord
+                        (\val ->
+                            \case
+                                UserName -> val
+                                UserAge -> show val
+                        )
+                        exampleUser
+                        `shouldBe`
+                            ("Alice30" :: String)
+
+        describe "Traverse" $ do
+            it "can validate a record" $ do
+                let validateField :: ty -> Field User ty -> Maybe ty
+                    validateField val =
+                        \case
+                            UserName -> do
+                                guard (length val >= 1)
+                                pure val
+                            UserAge -> do
+                                guard (val >= 18)
+                                pure val
+                traverseRecord validateField exampleUser
+                    `shouldBe`
+                        Just User { name = "Alice", age = 30 }
+
+                traverseRecord validateField User { name = "", age = 1 }
+                    `shouldBe`
+                        Nothing
 
 
+            it "can do either" $ do
+                let validateField :: ty -> Field User ty -> Either String ty
+                    validateField val =
+                        \case
+                            UserName -> do
+                                if length val >= 1
+                                    then pure val
+                                    else Left "Name must be at least one character"
+                            UserAge -> do
+                                if val >= 18
+                                    then pure val
+                                    else Left "Age must be at least 18"
+
+                traverseRecord validateField exampleUser
+                    `shouldBe`
+                        Right User { name = "Alice", age = 30 }
+
+                traverseRecord validateField User { name = "", age = 1 }
+                    `shouldBe`
+                        Left "Age must be at least 18"
+
+            it "can target one field" $ do
+                traverseRecord
+                    (\val ->
+                        \case
+                            UserName -> do
+                                guard (length val >= 1)
+                                pure val
+                            _ ->
+                                pure val
+                    )
+                    User { name = "", age = 30 }
+                    `shouldBe`
+                        Nothing

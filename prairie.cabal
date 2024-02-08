@@ -27,6 +27,8 @@ library
       Prairie.Class
       Prairie.Update
       Prairie.Diff
+      Prairie.Fold
+      Prairie.Traverse
       Prairie.TH
 
   build-depends:
@@ -87,4 +89,5 @@ test-suite prairie-test
     , prairie
     , aeson
     , lens
+    , hspec
   default-language: Haskell2010
