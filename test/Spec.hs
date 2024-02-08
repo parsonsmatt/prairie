@@ -19,11 +19,11 @@ module Main where
 
 import Prairie
 
-import Data.Monoid
 import Control.Lens
 import Control.Monad
 import Data.Aeson
 import Data.Kind (Type)
+import Data.Monoid
 import Test.Hspec
 
 data User = User { name :: String, age :: Int }
@@ -110,12 +110,12 @@ main = hspec $ do
         describe "Fold" $ do
             describe "foldRecord" $ do
                 it "can count the fields" $ do
-                    foldRecord (\_field _val acc -> acc + 1) 0 exampleUser
+                    foldRecord (\_val acc _field -> acc + 1) 0 exampleUser
                         `shouldBe`
                             2
                 it "can distinguish fields" $ do
                     foldRecord
-                        (\field val acc ->
+                        (\val acc field ->
                             case field of
                                 UserName ->
                                     length val + acc
@@ -134,8 +134,8 @@ main = hspec $ do
                             Sum 2
                 it "can combine strings" $ do
                     foldMapRecord
-                        (\field val ->
-                            case field of
+                        (\val ->
+                            \case
                                 UserName -> val
                                 UserAge -> show val
                         )
@@ -145,9 +145,9 @@ main = hspec $ do
 
         describe "Traverse" $ do
             it "can validate a record" $ do
-                let validateField :: Field User ty -> ty -> Maybe ty
-                    validateField field val =
-                        case field of
+                let validateField :: ty -> Field User ty -> Maybe ty
+                    validateField val =
+                        \case
                             UserName -> do
                                 guard (length val >= 1)
                                 pure val
@@ -164,9 +164,9 @@ main = hspec $ do
 
 
             it "can do either" $ do
-                let validateField :: Field User ty -> ty -> Either String ty
-                    validateField field val =
-                        case field of
+                let validateField :: ty -> Field User ty -> Either String ty
+                    validateField val =
+                        \case
                             UserName -> do
                                 if length val >= 1
                                     then pure val
@@ -183,3 +183,17 @@ main = hspec $ do
                 traverseRecord validateField User { name = "", age = 1 }
                     `shouldBe`
                         Left "Age must be at least 18"
+
+            it "can target one field" $ do
+                traverseRecord
+                    (\val ->
+                        \case
+                            UserName -> do
+                                guard (length val >= 1)
+                                pure val
+                            _ ->
+                                pure val
+                    )
+                    User { name = "", age = 30 }
+                    `shouldBe`
+                        Nothing
