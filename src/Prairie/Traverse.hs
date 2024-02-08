@@ -6,6 +6,7 @@ module Prairie.Traverse where
 
 import Data.List (foldl')
 import Prairie.Class
+import Control.Applicative (liftA2)
 import Prairie.Fold
 
 -- | Apply an effectful function over each field of a 'Record', producing
