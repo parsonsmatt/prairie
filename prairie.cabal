@@ -24,6 +24,7 @@ source-repository head
 library
   exposed-modules:
       Prairie
+      Prairie.Advanced
       Prairie.Class
       Prairie.Update
       Prairie.Diff
