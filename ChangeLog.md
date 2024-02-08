@@ -2,7 +2,7 @@
 
 ## 0.0.3.0
 
-- [#]()
+- [#8](https://github.com/parsonsmatt/prairie/pull/8)
     - The `Prairie.Fold` module is introduced, allowing you to fold records.
     - The `Prairie.Traverse` module is introduced, allowing you to traverse over records.
 
