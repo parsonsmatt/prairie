@@ -87,7 +87,7 @@ class Record rec where
     --
     -- @
     -- tabulateRecordA $ \\field -> case field of
-    --     UserName -> Just "Matt"
+    --     UserName -> Just \"Matt\"
     --     UserAge -> Nothing
     --
     -- tabulateRecordA $ \\field -> case field of

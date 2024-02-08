@@ -1,4 +1,5 @@
 {-# language PolyKinds, LambdaCase, TypeApplications, RankNTypes, StandaloneDeriving, ConstraintKinds, TemplateHaskell, DataKinds, OverloadedStrings, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeFamilies, GADTs #-}
+
 {-# options_ghc -Wall #-}
 module Main where
 
@@ -7,6 +8,7 @@ import Prairie
 import Data.Aeson
 import Control.Monad
 import Control.Lens
+import Data.Kind (Type)
 
 data User = User { name :: String, age :: Int }
   deriving Eq
@@ -42,7 +44,7 @@ instance PolyLens T where
     polyLens = \case
         TX -> lens x (\o n -> o { x = n }) :: Lens (T a) (T b) a b
 
-type family FieldLens (a :: *) (p :: *) (f :: * -> *) where
+type family FieldLens (a :: Type) (p :: Type) (f :: Type -> Type) where
     FieldLens (Field (t x) x) y f = LensLike f (t x) (t y) x y
     FieldLens (Field (t x) y) y f = LensLike f (t x) (t x) y y
 

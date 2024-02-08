@@ -82,9 +82,9 @@ instance (FieldDict FromJSON  rec, FieldDict Typeable rec, FromJSON (SomeField r
 -- | Run an 'Update' against the record it is for.
 --
 -- @
--- >>> let user = User { name = "Bob", age = 30 }
+-- >>> let user = User { name = \"Bob\", age = 30 }
 -- >>> updateSingleField (SetField UserName "Alice") user
--- User { name = "Alice", age = 30 }
+-- User { name = \"Alice\", age = 30 }
 -- @
 --
 -- @since 0.0.1.0

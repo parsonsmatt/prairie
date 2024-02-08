@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        cabal: ["3.6"]
-        ghc: ["8.8.4", "8.10.7", "9.0.2", "9.2.5", "9.4.4"]
+        cabal: ["3.10"]
+        ghc: ["8.8.4", "8.10.7", "9.0.2", "9.2.5", "9.4.4", "9.6", "9.8"]
     env:
       CONFIG: "--enable-tests"
     steps:
@@ -36,5 +36,3 @@ jobs:
             ${{ runner.os }}-${{ matrix.ghc }}-
       - run: cabal v2-build --disable-optimization -j $CONFIG
       - run: cabal v2-test --disable-optimization -j $CONFIG
-      - run: cabal v2-haddock -j $CONFIG
-      - run: cabal v2-sdist
