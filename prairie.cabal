@@ -24,6 +24,7 @@ source-repository head
 library
   exposed-modules:
       Prairie
+      Prairie.AsRecord
       Prairie.Class
       Prairie.Update
       Prairie.Diff

@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE FlexibleContexts, ConstraintKinds #-}
@@ -31,6 +32,7 @@ import Data.Aeson
 import Data.Kind (Type)
 import Data.Monoid
 import Test.Hspec
+import Prairie.AsRecord
 
 data User = User { name :: String, age :: Int }
   deriving (Show, Eq)
@@ -41,6 +43,15 @@ deriving instance Eq (Field User a)
 deriving instance Show (Field User a)
 
 exampleUser = User "Alice" 30
+
+data Foo = Foo
+    { ints :: [Int]
+    , char :: First Char
+    }
+
+mkRecord ''Foo
+
+deriving via AsRecord Foo instance Semigroup Foo
 
 data T a = T { x :: a, y :: Int }
 
