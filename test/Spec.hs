@@ -1,12 +1,18 @@
+{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
@@ -24,6 +30,8 @@ import Control.Monad
 import Data.Aeson
 import Data.Kind (Type)
 import Data.Monoid
+import GHC.Records
+import Prairie.AsRecord
 import Test.Hspec
 
 data User = User { name :: String, age :: Int }
@@ -35,6 +43,17 @@ deriving instance Eq (Field User a)
 deriving instance Show (Field User a)
 
 exampleUser = User "Alice" 30
+
+data Foo = Foo
+    { ints :: [Int]
+    , char :: First Char
+    }
+    deriving (Show, Eq)
+
+mkRecord ''Foo
+
+deriving via AsRecord Foo instance Semigroup Foo
+deriving via AsRecord Foo instance Monoid Foo
 
 data T a = T { x :: a, y :: Int }
 
@@ -197,3 +216,31 @@ main = hspec $ do
                     User { name = "", age = 30 }
                     `shouldBe`
                         Nothing
+
+        describe "Semigroup" do
+            it "can combine two records" do
+                let f0 = Foo [1] (First Nothing)
+                    f1 = Foo [2,3] (First (Just 'a'))
+                f0 <> f1
+                    `shouldBe`
+                        Foo [1,2,3] (First (Just 'a'))
+
+        describe "Monoid" do
+            it "can produce an empty record" do
+                let obvious =
+                        Foo mempty mempty
+                mempty `shouldBe` obvious
+
+        describe "Zip" do
+            it "can combine two records" do
+                let u0 = User "Matt" 35
+                    u1 = User "ttaM" 53
+                zipWithRecord (\a b -> \case
+                    UserName ->
+                        a <> b
+                    UserAge ->
+                        a + b
+                    ) u0 u1
+                    `shouldBe`
+                        User "MattttaM" (35 + 53)
+

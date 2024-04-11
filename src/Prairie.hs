@@ -7,7 +7,10 @@ module Prairie
     , module Prairie.Diff
     , module Prairie.Fold
     , module Prairie.Traverse
+    , module Prairie.Zip
     , module Prairie.TH
+    , module Prairie.Semigroup
+    , module Prairie.Monoid
     ) where
 
 import Prairie.Class
@@ -16,3 +19,6 @@ import Prairie.Fold
 import Prairie.TH
 import Prairie.Traverse
 import Prairie.Update
+import Prairie.Zip
+import Prairie.Semigroup
+import Prairie.Monoid

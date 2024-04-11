@@ -1,5 +1,13 @@
 # Changelog for prairie
 
+## 0.0.4.0
+
+- [#13](https://github.com/parsonsmatt/prairie/pull/13)
+    - Introduce `Prairie.Semigroup`, allowing you to combine two records by semigroup-appending their fields together.
+    - Introduce `Prairie.Zip`, allowing you to combine two records by specifying how to combine their fields. This fuels `Prairie.Semigroup`.
+    - Introduce `Prairie.Monoid`, allowing you to make an `emptyRecord` with `mempty` at each field.
+    - Introduce `Prairie.AsRecord`, allowing you to derive instances for records based on their `Record` and `FieldDict` instances.
+
 ## 0.0.3.0
 
 - [#8](https://github.com/parsonsmatt/prairie/pull/8)

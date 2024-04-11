@@ -1,7 +1,7 @@
 cabal-version: 1.12
 
 name:           prairie
-version:        0.0.3.0
+version:        0.0.4.0
 description:    Please see the README on GitHub at <https://github.com/parsonsmatt/prairie#readme>
 homepage:       https://github.com/parsonsmatt/prairie#readme
 bug-reports:    https://github.com/parsonsmatt/prairie/issues
@@ -24,12 +24,16 @@ source-repository head
 library
   exposed-modules:
       Prairie
+      Prairie.AsRecord
       Prairie.Class
       Prairie.Update
       Prairie.Diff
       Prairie.Fold
+      Prairie.Zip
       Prairie.Traverse
       Prairie.TH
+      Prairie.Semigroup
+      Prairie.Monoid
 
   build-depends:
       base              >= 4.13 && < 5
