@@ -48,10 +48,12 @@ data Foo = Foo
     { ints :: [Int]
     , char :: First Char
     }
+    deriving (Show, Eq)
 
 mkRecord ''Foo
 
 deriving via AsRecord Foo instance Semigroup Foo
+deriving via AsRecord Foo instance Monoid Foo
 
 data T a = T { x :: a, y :: Int }
 
@@ -214,3 +216,31 @@ main = hspec $ do
                     User { name = "", age = 30 }
                     `shouldBe`
                         Nothing
+
+        describe "Semigroup" do
+            it "can combine two records" do
+                let f0 = Foo [1] (First Nothing)
+                    f1 = Foo [2,3] (First (Just 'a'))
+                f0 <> f1
+                    `shouldBe`
+                        Foo [1,2,3] (First (Just 'a'))
+
+        describe "Monoid" do
+            it "can produce an empty record" do
+                let obvious =
+                        Foo mempty mempty
+                mempty `shouldBe` obvious
+
+        describe "Zip" do
+            it "can combine two records" do
+                let u0 = User "Matt" 35
+                    u1 = User "ttaM" 53
+                zipWithRecord (\a b -> \case
+                    UserName ->
+                        a <> b
+                    UserAge ->
+                        a + b
+                    ) u0 u1
+                    `shouldBe`
+                        User "MattttaM" (35 + 53)
+
