@@ -1,4 +1,9 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE ApplicativeDo #-}
+{-# LANGUAGE FlexibleContexts, ConstraintKinds #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -19,6 +24,7 @@ module Main where
 
 import Prairie
 
+import GHC.Records
 import Control.Lens
 import Control.Monad
 import Data.Aeson
