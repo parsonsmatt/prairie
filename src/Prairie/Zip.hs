@@ -17,6 +17,8 @@ import Prairie.Fold
 --                 a + b
 --     )
 -- @
+--
+-- @since 0.0.4.0
 zipWithRecord
     :: forall rec. (Record rec)
     => (forall ty. ty -> ty -> Field rec ty -> ty)

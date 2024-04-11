@@ -1,18 +1,19 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE FlexibleContexts, ConstraintKinds #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
@@ -25,14 +26,14 @@ module Main where
 
 import Prairie
 
-import GHC.Records
 import Control.Lens
 import Control.Monad
 import Data.Aeson
 import Data.Kind (Type)
 import Data.Monoid
-import Test.Hspec
+import GHC.Records
 import Prairie.AsRecord
+import Test.Hspec
 
 data User = User { name :: String, age :: Int }
   deriving (Show, Eq)

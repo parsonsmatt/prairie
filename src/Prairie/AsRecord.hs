@@ -4,8 +4,8 @@
 module Prairie.AsRecord where
 
 import Prairie.Class
-import Prairie.Semigroup
 import Prairie.Monoid
+import Prairie.Semigroup
 
 -- | This @newtype@ is intended for use with @DerivingVia@.
 --
@@ -33,11 +33,19 @@ import Prairie.Monoid
 -- @
 -- deriving via AsRecord Foo instance Semigroup Foo
 -- @
+--
+-- @since 0.0.4.0
 newtype AsRecord rec = AsRecord { unAsRecord :: rec }
 
+-- |
+--
+-- @since 0.0.4.0
 instance (Record rec, FieldDict Semigroup rec) => Semigroup (AsRecord rec) where
     AsRecord r0 <> AsRecord r1 =
         AsRecord (appendRecord r0 r1)
 
+-- |
+--
+-- @since 0.0.4.0
 instance (Record rec, FieldDict Semigroup rec, FieldDict Monoid rec) => Monoid (AsRecord rec) where
     mempty = AsRecord emptyRecord
