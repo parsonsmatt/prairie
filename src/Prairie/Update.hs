@@ -4,10 +4,10 @@
 module Prairie.Update where
 
 import Data.Aeson (ToJSON(..), FromJSON(..), object, withObject, (.:), (.=))
-import Control.Lens (set)
 import Data.Typeable (Typeable, (:~:)(..), eqT)
 
 import Prairie.Class
+import Prairie.Internal (set)
 
 -- | An operation representing an update against the 'rec' in question.
 --

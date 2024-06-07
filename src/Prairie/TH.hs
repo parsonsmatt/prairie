@@ -7,13 +7,13 @@ module Prairie.TH where
 
 import Data.Constraint (Dict(..))
 import Language.Haskell.TH
-import Control.Lens (lens)
 import qualified Data.List as List
 import Data.Traversable (for)
 import Data.Char (toUpper, toLower)
 import qualified Data.Text as Text
 
 import Prairie.Class
+import Prairie.Internal (lens)
 
 -- | Create an instance of the 'Record' type class.
 --
