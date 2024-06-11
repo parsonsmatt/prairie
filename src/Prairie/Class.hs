@@ -16,9 +16,10 @@
 -- @since 0.0.1.0
 module Prairie.Class where
 
-import Control.Lens (Lens', set, view, Identity(..), Const(..))
 import Data.Aeson (ToJSON(..), FromJSON(..), withText)
 import Data.Constraint (Dict(..))
+import Data.Functor.Const (Const(..))
+import Data.Functor.Identity (Identity(..))
 import Data.Kind (Constraint, Type)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -27,6 +28,8 @@ import qualified Data.Text as Text
 import Data.Typeable ((:~:)(..), Typeable, eqT)
 import GHC.OverloadedLabels (IsLabel(..))
 import GHC.TypeLits (Symbol)
+
+import Prairie.Internal (Lens', set, view)
 
 -- | Instances of this class have a datatype 'Field' which allow you to
 -- represent fields as a concrete datatype. This allows you to have
