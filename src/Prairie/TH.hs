@@ -7,8 +7,6 @@ module Prairie.TH where
 
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
-import Data.Constraint (Dict(..))
-import Language.Haskell.TH
 import qualified Data.List as List
 import qualified Data.Text as Text
 import Data.Traversable (for)

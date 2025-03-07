@@ -18,10 +18,8 @@ module Prairie.Class where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
 import Data.Constraint (Dict (..))
-import Data.Aeson (ToJSON(..), FromJSON(..), withText)
-import Data.Constraint (Dict(..))
-import Data.Functor.Const (Const(..))
-import Data.Functor.Identity (Identity(..))
+import Data.Functor.Const (Const (..))
+import Data.Functor.Identity (Identity (..))
 import Data.Kind (Constraint, Type)
 import Data.Map (Map)
 import qualified Data.Map as Map

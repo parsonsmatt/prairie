@@ -5,8 +5,6 @@ module Prairie.Update where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.Typeable (Typeable, eqT, (:~:) (..))
-import Data.Aeson (ToJSON(..), FromJSON(..), object, withObject, (.:), (.=))
-import Data.Typeable (Typeable, (:~:)(..), eqT)
 
 import Prairie.Class
 import Prairie.Internal (set)
