@@ -22,8 +22,8 @@ data Update rec where
 --
 -- @since 0.0.1.0
 instance
-    (forall a. Eq (Field rec a), FieldDict Typeable rec, FieldDict Eq rec) =>
-    Eq (Update rec)
+    (forall a. Eq (Field rec a), FieldDict Typeable rec, FieldDict Eq rec)
+    => Eq (Update rec)
     where
     SetField f0 (a0 :: a0) == SetField f1 (a1 :: a1) =
         withFieldDict @Typeable f0 $
@@ -75,8 +75,8 @@ instance (FieldDict ToJSON rec, forall a. ToJSON (Field rec a)) => ToJSON (Updat
 --
 -- @since 0.0.1.0
 instance
-    (FieldDict FromJSON rec, FieldDict Typeable rec, FromJSON (SomeField rec)) =>
-    FromJSON (Update rec)
+    (FieldDict FromJSON rec, FieldDict Typeable rec, FromJSON (SomeField rec))
+    => FromJSON (Update rec)
     where
     parseJSON = withObject "Update" $ \o -> do
         field <- o .: "field"

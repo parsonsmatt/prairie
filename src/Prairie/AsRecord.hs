@@ -48,7 +48,7 @@ instance (Record rec, FieldDict Semigroup rec) => Semigroup (AsRecord rec) where
 --
 -- @since 0.0.4.0
 instance
-    (Record rec, FieldDict Semigroup rec, FieldDict Monoid rec) =>
-    Monoid (AsRecord rec)
+    (Record rec, FieldDict Semigroup rec, FieldDict Monoid rec)
+    => Monoid (AsRecord rec)
     where
     mempty = AsRecord emptyRecord

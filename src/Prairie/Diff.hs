@@ -21,13 +21,13 @@ import Prairie.Update
 -- patches to 'Record's.
 --
 -- @since 0.0.1.0
-diffRecord ::
-    (Record rec, FieldDict Eq rec) =>
-    -- | The old record.
-    rec ->
-    -- | The new record.
-    rec ->
-    [Update rec]
+diffRecord
+    :: (Record rec, FieldDict Eq rec)
+    => rec
+    -- ^ The old record.
+    -> rec
+    -- ^ The new record.
+    -> [Update rec]
 diffRecord old new = foldMap go allFields
   where
     go (SomeField f) =

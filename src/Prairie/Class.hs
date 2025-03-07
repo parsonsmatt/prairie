@@ -188,8 +188,8 @@ deriving stock instance (forall a. Show (Field rec a)) => Show (SomeField rec)
 instance
     ( forall a. Eq (Field rec a)
     , FieldDict Typeable rec
-    ) =>
-    Eq (SomeField rec)
+    )
+    => Eq (SomeField rec)
     where
     SomeField (f0 :: Field rec a) == SomeField (f1 :: Field rec b) =
         withFieldDict @Typeable f0 $
@@ -296,15 +296,15 @@ class (Record r) => FieldDict (c :: Type -> Constraint) (r :: Type) where
 -- generic records in type class instances.
 --
 -- @since 0.0.1.0
-withFieldDict ::
-    forall c rec a r.
-    (FieldDict c rec) =>
-    -- | The record field we want to unpack. We need this value in order to
+withFieldDict
+    :: forall c rec a r
+     . (FieldDict c rec)
+    => Field rec a
+    -- ^ The record field we want to unpack. We need this value in order to
     -- know what type we want the constraint to apply to.
-    Field rec a ->
-    -- | A value that assumes the constraint @c@ holds for the type @a@.
-    ((c a) => r) ->
-    r
+    -> ((c a) => r)
+    -- ^ A value that assumes the constraint @c@ holds for the type @a@.
+    -> r
 withFieldDict l k =
     case getFieldDict @c l of
         Dict -> k

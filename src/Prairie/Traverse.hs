@@ -48,12 +48,12 @@ import Prairie.Fold
 -- @
 --
 -- @since 0.0.3.0
-traverseRecord ::
-    forall rec f.
-    (Record rec, Applicative f) =>
-    (forall ty. ty -> Field rec ty -> f ty) ->
-    rec ->
-    f rec
+traverseRecord
+    :: forall rec f
+     . (Record rec, Applicative f)
+    => (forall ty. ty -> Field rec ty -> f ty)
+    -> rec
+    -> f rec
 traverseRecord f init =
     foldl' k (pure init) (recordToFieldList init)
   where
