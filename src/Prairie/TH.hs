@@ -5,15 +5,17 @@
 -- @since 0.0.1.0
 module Prairie.TH where
 
-import Control.Lens (lens)
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
+import Data.Constraint (Dict(..))
+import Language.Haskell.TH
 import qualified Data.List as List
 import qualified Data.Text as Text
 import Data.Traversable (for)
 import Language.Haskell.TH
 
 import Prairie.Class
+import Prairie.Internal (lens)
 
 -- | Create an instance of the 'Record' type class.
 --
