@@ -9,8 +9,8 @@
 module Prairie.Fold where
 
 import Control.Monad (foldM)
-import Prairie.Class
 import Data.List (foldl')
+import Prairie.Class
 
 -- | A datatype containing a 'Field' along with a value for that field.
 --
@@ -25,7 +25,7 @@ data SomeFieldWithValue rec where
 recordToFieldList :: forall rec. (Record rec) => rec -> [SomeFieldWithValue rec]
 recordToFieldList rec =
     fmap
-        (\(SomeField field) ->
+        ( \(SomeField field) ->
             SomeFieldWithValue field (getRecordField field rec)
         )
         (allFields @rec)
@@ -61,16 +61,16 @@ recordToFieldList rec =
 -- @
 --
 -- @since 0.0.3.0
-foldRecord
-    :: forall rec r
-     . (Record rec)
-    => (forall ty. ty -> r -> Field rec ty -> r)
-    -> r
-    -> rec
-    -> r
+foldRecord ::
+    forall rec r.
+    (Record rec) =>
+    (forall ty. ty -> r -> Field rec ty -> r) ->
+    r ->
+    rec ->
+    r
 foldRecord k init rec =
     foldl'
-        (\acc (SomeFieldWithValue field value) ->
+        ( \acc (SomeFieldWithValue field value) ->
             k value acc field
         )
         init
@@ -79,16 +79,16 @@ foldRecord k init rec =
 -- | Fold over a 'Record' with a monadic action.
 --
 -- @since 0.0.3.0
-foldMRecord
-    :: forall rec m r
-     . (Record rec, Monad m)
-    => (forall ty. ty -> r -> Field rec ty -> m r)
-    -> r
-    -> rec
-    -> m r
+foldMRecord ::
+    forall rec m r.
+    (Record rec, Monad m) =>
+    (forall ty. ty -> r -> Field rec ty -> m r) ->
+    r ->
+    rec ->
+    m r
 foldMRecord k init rec =
     foldM
-        (\acc (SomeFieldWithValue field value) ->
+        ( \acc (SomeFieldWithValue field value) ->
             k value acc field
         )
         init
@@ -98,11 +98,11 @@ foldMRecord k init rec =
 -- them together using 'mappend'.
 --
 -- @since 0.0.3.0
-foldMapRecord
-    :: forall rec m
-    . (Record rec, Monoid m)
-    => (forall ty. ty -> Field rec ty -> m)
-    -> rec
-    -> m
+foldMapRecord ::
+    forall rec m.
+    (Record rec, Monoid m) =>
+    (forall ty. ty -> Field rec ty -> m) ->
+    rec ->
+    m
 foldMapRecord k rec =
     foldMap (\(SomeFieldWithValue f v) -> k v f) (recordToFieldList rec)

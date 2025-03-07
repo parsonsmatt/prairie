@@ -35,7 +35,7 @@ import Prairie.Semigroup
 -- @
 --
 -- @since 0.0.4.0
-newtype AsRecord rec = AsRecord { unAsRecord :: rec }
+newtype AsRecord rec = AsRecord {unAsRecord :: rec}
 
 -- |
 --
@@ -47,5 +47,8 @@ instance (Record rec, FieldDict Semigroup rec) => Semigroup (AsRecord rec) where
 -- |
 --
 -- @since 0.0.4.0
-instance (Record rec, FieldDict Semigroup rec, FieldDict Monoid rec) => Monoid (AsRecord rec) where
+instance
+    (Record rec, FieldDict Semigroup rec, FieldDict Monoid rec) =>
+    Monoid (AsRecord rec)
+    where
     mempty = AsRecord emptyRecord
