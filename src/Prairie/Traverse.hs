@@ -4,9 +4,9 @@
 -- @since 0.0.3.0
 module Prairie.Traverse where
 
+import Control.Applicative (liftA2)
 import Data.List (foldl')
 import Prairie.Class
-import Control.Applicative (liftA2)
 import Prairie.Fold
 
 -- | Apply an effectful function over each field of a 'Record', producing
@@ -49,7 +49,8 @@ import Prairie.Fold
 --
 -- @since 0.0.3.0
 traverseRecord
-    :: forall rec f. (Record rec, Applicative f)
+    :: forall rec f
+     . (Record rec, Applicative f)
     => (forall ty. ty -> Field rec ty -> f ty)
     -> rec
     -> f rec

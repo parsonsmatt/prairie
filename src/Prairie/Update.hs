@@ -3,8 +3,8 @@
 -- @since 0.0.1.0
 module Prairie.Update where
 
-import Data.Aeson (ToJSON(..), FromJSON(..), object, withObject, (.:), (.=))
-import Data.Typeable (Typeable, (:~:)(..), eqT)
+import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
+import Data.Typeable (Typeable, eqT, (:~:) (..))
 
 import Prairie.Class
 import Prairie.Internal (set)
@@ -16,33 +16,36 @@ import Prairie.Internal (set)
 --
 -- @since 0.0.1.0
 data Update rec where
-  SetField :: Field rec a -> a -> Update rec
+    SetField :: Field rec a -> a -> Update rec
 
 -- |
 --
 -- @since 0.0.1.0
-instance (forall a. Eq (Field rec a), FieldDict Typeable rec, FieldDict Eq rec) => Eq (Update rec) where
-  SetField f0 (a0 :: a0) == SetField f1 (a1 :: a1) =
-    withFieldDict @Typeable f0 $
-    withFieldDict @Typeable f1 $
-    case eqT @a0 @a1 of
-      Nothing ->
-        False
-      Just Refl ->
-        withFieldDict @Eq f0 $
-        f0 == f1 && a0 == a1
+instance
+    (forall a. Eq (Field rec a), FieldDict Typeable rec, FieldDict Eq rec)
+    => Eq (Update rec)
+    where
+    SetField f0 (a0 :: a0) == SetField f1 (a1 :: a1) =
+        withFieldDict @Typeable f0 $
+            withFieldDict @Typeable f1 $
+                case eqT @a0 @a1 of
+                    Nothing ->
+                        False
+                    Just Refl ->
+                        withFieldDict @Eq f0 $
+                            f0 == f1 && a0 == a1
 
 -- |
 --
 -- @since 0.0.1.0
 instance (forall a. Show (Field rec a), FieldDict Show rec) => Show (Update rec) where
-  showsPrec d (SetField field a) =
-    withFieldDict @Show field $
-      showParen (d > 10)
-        $ showString "Update "
-        . showsPrec 11 field
-        . showString " "
-        . showsPrec 11 a
+    showsPrec d (SetField field a) =
+        withFieldDict @Show field $
+            showParen (d > 10) $
+                showString "Update "
+                    . showsPrec 11 field
+                    . showString " "
+                    . showsPrec 11 a
 
 -- |  Renders an 'Update' in the following format:
 --
@@ -56,9 +59,9 @@ instance (forall a. Show (Field rec a), FieldDict Show rec) => Show (Update rec)
 --
 -- @since 0.0.1.0
 instance (FieldDict ToJSON rec, forall a. ToJSON (Field rec a)) => ToJSON (Update rec) where
-  toJSON (SetField field newVal) =
-    withFieldDict @ToJSON field $
-      object [ "field" .= field, "value" .= newVal ]
+    toJSON (SetField field newVal) =
+        withFieldDict @ToJSON field $
+            object ["field" .= field, "value" .= newVal]
 
 -- | Parses an 'Update' with the following format:
 --
@@ -71,13 +74,16 @@ instance (FieldDict ToJSON rec, forall a. ToJSON (Field rec a)) => ToJSON (Updat
 --
 --
 -- @since 0.0.1.0
-instance (FieldDict FromJSON  rec, FieldDict Typeable rec, FromJSON (SomeField rec)) => FromJSON (Update rec) where
-  parseJSON = withObject "Update" $ \o -> do
-    field <- o .: "field"
-    case field of
-      SomeField field ->
-        withFieldDict @FromJSON field $
-          SetField field <$> o .: "value"
+instance
+    (FieldDict FromJSON rec, FieldDict Typeable rec, FromJSON (SomeField rec))
+    => FromJSON (Update rec)
+    where
+    parseJSON = withObject "Update" $ \o -> do
+        field <- o .: "field"
+        case field of
+            SomeField field ->
+                withFieldDict @FromJSON field $
+                    SetField field <$> o .: "value"
 
 -- | Run an 'Update' against the record it is for.
 --
@@ -88,12 +94,12 @@ instance (FieldDict FromJSON  rec, FieldDict Typeable rec, FromJSON (SomeField r
 -- @
 --
 -- @since 0.0.1.0
-updateSingleField :: Record rec => Update rec -> rec -> rec
+updateSingleField :: (Record rec) => Update rec -> rec -> rec
 updateSingleField (SetField field newValue) rec =
-  set (recordFieldLens field) newValue rec
+    set (recordFieldLens field) newValue rec
 
 -- | Perform an list of updates against the 'Record'.
 --
 -- @since 0.0.1.0
-updateRecord :: Record rec => [Update rec] -> rec -> rec
+updateRecord :: (Record rec) => [Update rec] -> rec -> rec
 updateRecord upds rec = foldr updateSingleField rec upds

@@ -16,9 +16,9 @@ module Prairie
 import Prairie.Class
 import Prairie.Diff
 import Prairie.Fold
+import Prairie.Monoid
+import Prairie.Semigroup
 import Prairie.TH
 import Prairie.Traverse
 import Prairie.Update
 import Prairie.Zip
-import Prairie.Semigroup
-import Prairie.Monoid

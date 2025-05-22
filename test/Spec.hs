@@ -18,8 +18,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-
-{-# options_ghc -Wall #-}
+{-# OPTIONS_GHC -Wall #-}
 
 module Main where
 
@@ -34,8 +33,8 @@ import GHC.Records
 import Prairie.AsRecord
 import Test.Hspec
 
-data User = User { name :: String, age :: Int }
-  deriving (Show, Eq)
+data User = User {name :: String, age :: Int}
+    deriving (Show, Eq)
 
 mkRecord ''User
 
@@ -55,7 +54,7 @@ mkRecord ''Foo
 deriving via AsRecord Foo instance Semigroup Foo
 deriving via AsRecord Foo instance Monoid Foo
 
-data T a = T { x :: a, y :: Int }
+data T a = T {x :: a, y :: Int}
 
 instance Record (T a) where
     data Field (T a) t where
@@ -63,8 +62,8 @@ instance Record (T a) where
         TY :: Field (T a) Int
 
     recordFieldLens = \case
-        TX -> lens x (\o n -> o { x = n })
-        TY -> lens y (\o n -> o { y = n })
+        TX -> lens x (\o n -> o{x = n})
+        TY -> lens y (\o n -> o{y = n})
 
     tabulateRecordA f = T <$> f TX <*> f TY
 
@@ -72,13 +71,12 @@ instance Record (T a) where
         TX -> "TX"
         TY -> "TY"
 
-
 class PolyLens t where
     polyLens :: (forall x. Field (t x) x) -> Lens (t a) (t b) a b
 
 instance PolyLens T where
     polyLens = \case
-        TX -> lens x (\o n -> o { x = n }) :: Lens (T a) (T b) a b
+        TX -> lens x (\o n -> o{x = n}) :: Lens (T a) (T b) a b
 
 type family FieldLens (a :: Type) (p :: Type) (f :: Type -> Type) where
     FieldLens (Field (t x) x) y f = LensLike f (t x) (t y) x y
@@ -90,13 +88,15 @@ main = hspec $ do
         it "getField" $ do
             getRecordField UserName exampleUser `shouldBe` "Alice"
         it "setField" $ do
-            setRecordField UserAge 32 exampleUser `shouldBe` User { name = "Alice", age = 32 }
+            setRecordField UserAge 32 exampleUser
+                `shouldBe` User{name = "Alice", age = 32}
         it "label" $ do
             recordFieldLabel UserAge `shouldBe` "age"
         it "label" $ do
             recordFieldLabel UserName `shouldBe` "name"
 
-        let t :: T Int
+        let
+            t :: T Int
             t = T 3 2
 
             t' :: T Char
@@ -104,24 +104,21 @@ main = hspec $ do
 
         it "update json" $
             encode (diffRecord exampleUser (setRecordField UserName "Bob" exampleUser))
-            `shouldBe`
-            "[{\"field\":\"name\",\"value\":\"Bob\"}]"
+                `shouldBe` "[{\"field\":\"name\",\"value\":\"Bob\"}]"
 
         it "decode update" $
-          decode "[{\"field\":\"name\",\"value\":\"Bob\"}]"
-          `shouldBe`
-          Just [SetField UserName "Bob"]
+            decode "[{\"field\":\"name\",\"value\":\"Bob\"}]"
+                `shouldBe` Just [SetField UserName "Bob"]
 
         it "tabulateRecordA" $ do
             user' <-
-              tabulateRecordA $ \case
-                  UserName ->
-                      print 10 >> pure "Matt"
-                  UserAge ->
-                      print 20 >> pure 33
+                tabulateRecordA $ \case
+                    UserName ->
+                        print 10 >> pure "Matt"
+                    UserAge ->
+                        print 20 >> pure 33
             user'
-                `shouldBe`
-                User
+                `shouldBe` User
                     { name = "Matt"
                     , age = 33
                     }
@@ -130,11 +127,10 @@ main = hspec $ do
             describe "foldRecord" $ do
                 it "can count the fields" $ do
                     foldRecord (\_val acc _field -> acc + 1) 0 exampleUser
-                        `shouldBe`
-                            2
+                        `shouldBe` 2
                 it "can distinguish fields" $ do
                     foldRecord
-                        (\val acc field ->
+                        ( \val acc field ->
                             case field of
                                 UserName ->
                                     length val + acc
@@ -143,28 +139,26 @@ main = hspec $ do
                         )
                         (0 :: Int)
                         exampleUser
-                        `shouldBe`
-                            35
+                        `shouldBe` 35
 
             describe "foldMapRecord" $ do
                 it "can count the fields" $ do
                     foldMapRecord (\_ _ -> Sum 1) exampleUser
-                        `shouldBe`
-                            Sum 2
+                        `shouldBe` Sum 2
                 it "can combine strings" $ do
                     foldMapRecord
-                        (\val ->
+                        ( \val ->
                             \case
                                 UserName -> val
                                 UserAge -> show val
                         )
                         exampleUser
-                        `shouldBe`
-                            ("Alice30" :: String)
+                        `shouldBe` ("Alice30" :: String)
 
         describe "Traverse" $ do
             it "can validate a record" $ do
-                let validateField :: ty -> Field User ty -> Maybe ty
+                let
+                    validateField :: ty -> Field User ty -> Maybe ty
                     validateField val =
                         \case
                             UserName -> do
@@ -174,16 +168,14 @@ main = hspec $ do
                                 guard (val >= 18)
                                 pure val
                 traverseRecord validateField exampleUser
-                    `shouldBe`
-                        Just User { name = "Alice", age = 30 }
+                    `shouldBe` Just User{name = "Alice", age = 30}
 
-                traverseRecord validateField User { name = "", age = 1 }
-                    `shouldBe`
-                        Nothing
-
+                traverseRecord validateField User{name = "", age = 1}
+                    `shouldBe` Nothing
 
             it "can do either" $ do
-                let validateField :: ty -> Field User ty -> Either String ty
+                let
+                    validateField :: ty -> Field User ty -> Either String ty
                     validateField val =
                         \case
                             UserName -> do
@@ -196,16 +188,14 @@ main = hspec $ do
                                     else Left "Age must be at least 18"
 
                 traverseRecord validateField exampleUser
-                    `shouldBe`
-                        Right User { name = "Alice", age = 30 }
+                    `shouldBe` Right User{name = "Alice", age = 30}
 
-                traverseRecord validateField User { name = "", age = 1 }
-                    `shouldBe`
-                        Left "Age must be at least 18"
+                traverseRecord validateField User{name = "", age = 1}
+                    `shouldBe` Left "Age must be at least 18"
 
             it "can target one field" $ do
                 traverseRecord
-                    (\val ->
+                    ( \val ->
                         \case
                             UserName -> do
                                 guard (length val >= 1)
@@ -213,34 +203,36 @@ main = hspec $ do
                             _ ->
                                 pure val
                     )
-                    User { name = "", age = 30 }
-                    `shouldBe`
-                        Nothing
+                    User{name = "", age = 30}
+                    `shouldBe` Nothing
 
         describe "Semigroup" do
             it "can combine two records" do
-                let f0 = Foo [1] (First Nothing)
-                    f1 = Foo [2,3] (First (Just 'a'))
+                let
+                    f0 = Foo [1] (First Nothing)
+                    f1 = Foo [2, 3] (First (Just 'a'))
                 f0 <> f1
-                    `shouldBe`
-                        Foo [1,2,3] (First (Just 'a'))
+                    `shouldBe` Foo [1, 2, 3] (First (Just 'a'))
 
         describe "Monoid" do
             it "can produce an empty record" do
-                let obvious =
+                let
+                    obvious =
                         Foo mempty mempty
                 mempty `shouldBe` obvious
 
         describe "Zip" do
             it "can combine two records" do
-                let u0 = User "Matt" 35
+                let
+                    u0 = User "Matt" 35
                     u1 = User "ttaM" 53
-                zipWithRecord (\a b -> \case
-                    UserName ->
-                        a <> b
-                    UserAge ->
-                        a + b
-                    ) u0 u1
-                    `shouldBe`
-                        User "MattttaM" (35 + 53)
-
+                zipWithRecord
+                    ( \a b -> \case
+                        UserName ->
+                            a <> b
+                        UserAge ->
+                            a + b
+                    )
+                    u0
+                    u1
+                    `shouldBe` User "MattttaM" (35 + 53)

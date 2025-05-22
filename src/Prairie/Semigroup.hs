@@ -9,7 +9,8 @@ import Prairie.Zip
 --
 -- @since 0.0.4.0
 appendRecord
-    :: forall rec. (Record rec, FieldDict Semigroup rec)
+    :: forall rec
+     . (Record rec, FieldDict Semigroup rec)
     => rec
     -> rec
     -> rec

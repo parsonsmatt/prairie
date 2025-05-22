@@ -16,17 +16,17 @@
 -- @since 0.0.1.0
 module Prairie.Class where
 
-import Data.Aeson (ToJSON(..), FromJSON(..), withText)
-import Data.Constraint (Dict(..))
-import Data.Functor.Const (Const(..))
-import Data.Functor.Identity (Identity(..))
+import Data.Aeson (FromJSON (..), ToJSON (..), withText)
+import Data.Constraint (Dict (..))
+import Data.Functor.Const (Const (..))
+import Data.Functor.Identity (Identity (..))
 import Data.Kind (Constraint, Type)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.Typeable ((:~:)(..), Typeable, eqT)
-import GHC.OverloadedLabels (IsLabel(..))
+import Data.Typeable (Typeable, eqT, (:~:) (..))
+import GHC.OverloadedLabels (IsLabel (..))
 import GHC.TypeLits (Symbol)
 
 import Prairie.Internal (Lens', set, view)
@@ -103,7 +103,7 @@ class Record rec where
     -- @
     --
     -- @since 0.0.2.0
-    tabulateRecordA :: Applicative m => (forall ty. Field rec ty -> m ty) -> m rec
+    tabulateRecordA :: (Applicative m) => (forall ty. Field rec ty -> m ty) -> m rec
 
     -- | Assign a 'Text' label for a record 'Field'.
     --
@@ -116,7 +116,7 @@ class Record rec where
     --
     -- @since 0.0.1.0
     recordFieldLabel :: Field rec ty -> Text
-    default recordFieldLabel :: Show (Field rec ty) => Field rec ty -> Text
+    default recordFieldLabel :: (Show (Field rec ty)) => Field rec ty -> Text
     recordFieldLabel = Text.pack . show
 
 -- | An enumeration of fields on the record.
@@ -128,7 +128,7 @@ class Record rec where
 -- member.
 --
 -- @since 0.0.1.0
-allFields :: Record rec => [SomeField rec]
+allFields :: (Record rec) => [SomeField rec]
 allFields = getConst $ tabulateRecordA $ \field ->
     Const [SomeField field]
 
@@ -138,29 +138,29 @@ allFields = getConst $ tabulateRecordA $ \field ->
 -- As of @0.0.2.0@, this is defined in terms of 'tabulateRecordA'.
 --
 -- @since 0.0.1.0
-tabulateRecord :: Record rec => (forall ty. Field rec ty -> ty) -> rec
+tabulateRecord :: (Record rec) => (forall ty. Field rec ty -> ty) -> rec
 tabulateRecord k = runIdentity (tabulateRecordA (Identity . k))
 
 -- | A mapping from 'Text' record field labels to the corresponding
 -- 'SomeField' for that record.
 --
 -- @since 0.0.1.0
-fieldMap :: Record rec => Map Text (SomeField rec)
+fieldMap :: (Record rec) => Map Text (SomeField rec)
 fieldMap =
-  foldMap
-    (\sf@(SomeField f) -> Map.singleton (recordFieldLabel f) sf)
-    allFields
+    foldMap
+        (\sf@(SomeField f) -> Map.singleton (recordFieldLabel f) sf)
+        allFields
 
 -- | Use a 'Field' to access the corresponding value in the record.
 --
 -- @since 0.0.1.0
-getRecordField :: Record rec => Field rec ty -> rec -> ty
+getRecordField :: (Record rec) => Field rec ty -> rec -> ty
 getRecordField f = view (recordFieldLens f)
 
 -- | Use a 'Field' to set the corresponding value in the record.
 --
 -- @since 0.0.1.0
-setRecordField :: Record rec => Field rec ty -> ty -> rec -> rec
+setRecordField :: (Record rec) => Field rec ty -> ty -> rec -> rec
 setRecordField f = set (recordFieldLens f)
 
 -- | An existential wrapper on a 'Field'. This hides the type of the value
@@ -170,7 +170,7 @@ setRecordField f = set (recordFieldLens f)
 --
 -- @since 0.0.1.0
 data SomeField rec where
-  SomeField :: Field rec a -> SomeField rec
+    SomeField :: Field rec a -> SomeField rec
 
 -- | You can write a standalone deriving instance for 'Field':
 --
@@ -189,62 +189,61 @@ data SomeField rec where
 deriving stock instance (forall a. Show (Field rec a)) => Show (SomeField rec)
 
 instance
-  ( forall a. Eq (Field rec a)
-  , FieldDict Typeable rec
-  )
- =>
-  Eq (SomeField rec)
- where
-  SomeField (f0 :: Field rec a) == SomeField (f1 :: Field rec b) =
-    withFieldDict @Typeable f0 $
-    withFieldDict @Typeable f1 $
-    case eqT @a @b of
-      Just Refl ->
-          f0 == f1
-      Nothing ->
-        False
+    ( forall a. Eq (Field rec a)
+    , FieldDict Typeable rec
+    )
+    => Eq (SomeField rec)
+    where
+    SomeField (f0 :: Field rec a) == SomeField (f1 :: Field rec b) =
+        withFieldDict @Typeable f0 $
+            withFieldDict @Typeable f1 $
+                case eqT @a @b of
+                    Just Refl ->
+                        f0 == f1
+                    Nothing ->
+                        False
 
 -- | This instance delegates to the underlying instance of 'ToJSON' for the
 -- given field.
 --
 -- @since 0.0.1.0
 instance (forall a. ToJSON (Field rec a)) => ToJSON (SomeField rec) where
-  toJSON (SomeField f) = toJSON f
+    toJSON (SomeField f) = toJSON f
 
 -- | This instance delegates to the underlying instance of 'FromJSON' for
 -- the given field.
 --
 -- @since 0.0.1.0
 instance (Record rec) => FromJSON (SomeField rec) where
-  parseJSON = withText "Field" $ \txt ->
-    case Map.lookup txt (fieldMap @rec) of
-      Just field ->
-        pure field
-      Nothing ->
-        fail "Field not"
+    parseJSON = withText "Field" $ \txt ->
+        case Map.lookup txt (fieldMap @rec) of
+            Just field ->
+                pure field
+            Nothing ->
+                fail "Field not"
 
 -- | This delegates to 'recordFieldLabel'  from the 'Record' class.
 --
 -- @since 0.0.1.0
-instance Record rec => ToJSON (Field rec a) where
-  toJSON = toJSON . recordFieldLabel
+instance (Record rec) => ToJSON (Field rec a) where
+    toJSON = toJSON . recordFieldLabel
 
 -- | This parses a 'Field' from a 'Text' given by the function
 -- 'recordFieldLabel'.
 --
 -- @since 0.0.1.0
 instance (Record rec, FieldDict Typeable rec, Typeable a) => FromJSON (Field rec a) where
-  parseJSON = withText "Field" $ \txt ->
-    case Map.lookup txt (fieldMap @rec) of
-      Just (SomeField (a :: Field rec b)) ->
-        withFieldDict @Typeable a $
-        case eqT @a @b of
-          Just Refl ->
-            pure a
-          Nothing ->
-            fail "types not same???"
-      Nothing ->
-        fail "Field not"
+    parseJSON = withText "Field" $ \txt ->
+        case Map.lookup txt (fieldMap @rec) of
+            Just (SomeField (a :: Field rec b)) ->
+                withFieldDict @Typeable a $
+                    case eqT @a @b of
+                        Just Refl ->
+                            pure a
+                        Nothing ->
+                            fail "types not same???"
+            Nothing ->
+                fail "Field not"
 
 -- | This class allows you to summon a type class instance based on a 'Field'
 -- of the record. Use this type class when you need to assert that all the
@@ -277,20 +276,20 @@ instance (Record rec, FieldDict Typeable rec, Typeable a) => FromJSON (Field rec
 --
 -- @since 0.0.1.0
 class (Record r) => FieldDict (c :: Type -> Constraint) (r :: Type) where
-  -- | Return the 'Dict' for the given field.
-  --
-  -- An implementation of this for the 'User' type would case on each field
-  -- and return 'Dict' in each branch.
-  --
-  -- @
-  -- getFieldDict userField =
-  --   case userField of
-  --    UserName -> Dict
-  --    UserAge -> Dict
-  -- @
-  --
-  -- @since 0.0.1.0
-  getFieldDict :: Field r a -> Dict (c a)
+    -- | Return the 'Dict' for the given field.
+    --
+    -- An implementation of this for the 'User' type would case on each field
+    -- and return 'Dict' in each branch.
+    --
+    -- @
+    -- getFieldDict userField =
+    --   case userField of
+    --    UserName -> Dict
+    --    UserAge -> Dict
+    -- @
+    --
+    -- @since 0.0.1.0
+    getFieldDict :: Field r a -> Dict (c a)
 
 -- | Given a record @field :: 'Field' rec a@, this function brings the
 -- type class instance @c a@ into scope for the third argument.
@@ -301,17 +300,17 @@ class (Record r) => FieldDict (c :: Type -> Constraint) (r :: Type) where
 --
 -- @since 0.0.1.0
 withFieldDict
-  :: forall c rec a r
-   . FieldDict c rec
-  => Field rec a
-  -- ^ The record field we want to unpack. We need this value in order to
-  -- know what type we want the constraint to apply to.
-  -> (c a => r)
-  -- ^ A value that assumes the constraint @c@ holds for the type @a@.
-  -> r
+    :: forall c rec a r
+     . (FieldDict c rec)
+    => Field rec a
+    -- ^ The record field we want to unpack. We need this value in order to
+    -- know what type we want the constraint to apply to.
+    -> ((c a) => r)
+    -- ^ A value that assumes the constraint @c@ holds for the type @a@.
+    -> r
 withFieldDict l k =
-  case getFieldDict @c l of
-    Dict -> k
+    case getFieldDict @c l of
+        Dict -> k
 
 -- | This type class enables you to map a 'Symbol's to a record 'Field'.
 --
@@ -350,15 +349,19 @@ withFieldDict l k =
 -- @
 --
 -- @since 0.0.1.0
-class Record rec => SymbolToField (sym :: Symbol) (rec :: Type) (a :: Type) | rec sym -> a where
-  -- | This function is designed to be used with a type application:
-  --
-  -- @
-  -- symbolToField @"age"
-  -- @
-  --
-  -- @since 0.0.1.0
-  symbolToField :: Field rec a
+class
+    (Record rec) =>
+    SymbolToField (sym :: Symbol) (rec :: Type) (a :: Type)
+        | rec sym -> a
+    where
+    -- | This function is designed to be used with a type application:
+    --
+    -- @
+    -- symbolToField @"age"
+    -- @
+    --
+    -- @since 0.0.1.0
+    symbolToField :: Field rec a
 
 -- | If you've defined the relevant instances for 'SymbolToField', then you
 -- can use @OverloadedLabels@ to write your labels. This can be convenient
@@ -373,4 +376,4 @@ class Record rec => SymbolToField (sym :: Symbol) (rec :: Type) (a :: Type) | re
 --
 -- @since 0.0.1.0
 instance (SymbolToField sym rec a) => IsLabel sym (Field rec a) where
-  fromLabel = symbolToField @sym
+    fromLabel = symbolToField @sym
