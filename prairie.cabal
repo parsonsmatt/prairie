@@ -24,17 +24,17 @@ source-repository head
 library
   exposed-modules:
       Prairie
-      Prairie.Advanced
       Prairie.AsRecord
       Prairie.Class
-      Prairie.Update
       Prairie.Diff
+      Prairie.Distributed
       Prairie.Fold
-      Prairie.Zip
-      Prairie.Traverse
-      Prairie.TH
-      Prairie.Semigroup
       Prairie.Monoid
+      Prairie.Semigroup
+      Prairie.TH
+      Prairie.Traverse
+      Prairie.Update
+      Prairie.Zip
 
   build-depends:
       base              >= 4.13 && < 5

@@ -9,6 +9,9 @@
         - `traverseRecord_` introduced as a slightly more efficient form of `void . traverseRecord f`.
         - `traverseFields` and `traverseFields_` introduced to only operate on fields, not requiring a whole record.
         - `traverseFieldsWithDict` (and `_` suffix variant) introduced to operate on fields with a constraint available.
+- [#5](https://github.com/parsonsmatt/prairie/pull/5), [#21](https://github.com/parsonsmatt/prairie/pull/21)
+    - The `Prairie.Distributed` module is made available.
+      This allows you to define records that are constructed on a per-field basis in some effect type.
 
 ## 0.0.4.1
 
