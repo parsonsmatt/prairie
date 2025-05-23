@@ -7,6 +7,7 @@ module Prairie.TH where
 
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
+import Data.Functor.Apply (Apply (..))
 import qualified Data.List as List
 import qualified Data.Text as Text
 import Data.Traversable (for)

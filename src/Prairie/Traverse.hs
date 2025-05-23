@@ -5,6 +5,7 @@
 module Prairie.Traverse where
 
 import Control.Applicative (liftA2)
+import Data.Foldable (traverse_)
 import Data.List (foldl')
 import Prairie.Class
 import Prairie.Fold

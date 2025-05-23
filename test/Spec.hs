@@ -27,6 +27,8 @@ import Prairie
 import Control.Lens hiding ((<.>))
 import Control.Monad
 import Data.Aeson
+import Data.Functor.Apply (Apply (..))
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid
 import Prairie.AsRecord
 import Test.Hspec

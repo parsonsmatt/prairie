@@ -9,7 +9,9 @@
 module Prairie.Fold where
 
 import Control.Monad (foldM)
+import Data.Foldable1 (foldMap1)
 import Data.List (foldl')
+import Data.List.NonEmpty (NonEmpty)
 import Prairie.Class
 
 -- | A datatype containing a 'Field' along with a value for that field.

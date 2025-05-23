@@ -42,7 +42,7 @@ library
     , containers
     , mtl
     , semigroupoids
-    , template-haskell  >=2.15 && <2.23
+    , template-haskell  >=2.15 && <2.24
     , text
 
   other-modules:
