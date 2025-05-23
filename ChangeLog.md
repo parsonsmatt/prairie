@@ -2,6 +2,8 @@
 
 ## 0.1.0.0
 
+- [#22](https://github.com/parsonsmatt/prairie/pull/22)
+    - Don't emit unused type variables
 - [#20](https://github.com/parsonsmatt/prairie/pull/20)
     - Add `tabulateRecordApply` which is like `tabulateRecordA` but allows you to use non-Applicaive effects.
     - `Prairie.Fold`: `foldMapRecord` now works with any `Semigroup` instead of any `Monoid`, allowing you to fold into a `NonEmpty` list.
