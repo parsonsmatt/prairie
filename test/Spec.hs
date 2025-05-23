@@ -24,14 +24,12 @@ module Main where
 
 import Prairie
 
-import Data.List.NonEmpty (NonEmpty(..))
 import Control.Lens hiding ((<.>))
 import Control.Monad
 import Data.Aeson
 import Data.Monoid
 import Prairie.AsRecord
 import Test.Hspec
-import Data.Functor.Apply
 
 data User = User {name :: String, age :: Int}
     deriving (Show, Eq)

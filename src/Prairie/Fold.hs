@@ -8,8 +8,6 @@
 -- @since 0.0.3.0
 module Prairie.Fold where
 
-import Data.Foldable1
-import Data.List.NonEmpty (NonEmpty)
 import Control.Monad (foldM)
 import Data.List (foldl')
 import Prairie.Class
@@ -31,7 +29,8 @@ recordToFieldList = recordToFieldsWithValues
 -- value for that record.
 --
 -- @since 0.0.3.0
-recordToFieldListNonEmpty :: forall rec. (Record rec) => rec -> NonEmpty (SomeFieldWithValue rec)
+recordToFieldListNonEmpty
+    :: forall rec. (Record rec) => rec -> NonEmpty (SomeFieldWithValue rec)
 recordToFieldListNonEmpty = recordToFieldsWithValues
 
 -- | Like 'recordToFieldList', but works for any 'Applicative' that's also
@@ -40,7 +39,8 @@ recordToFieldListNonEmpty = recordToFieldsWithValues
 --
 -- @since 0.1.0.0
 recordToFieldsWithValues
-    :: forall rec f. (Record rec, forall a. Semigroup (f a), Applicative f)
+    :: forall rec f
+     . (Record rec, forall a. Semigroup (f a), Applicative f)
     => rec
     -> f (SomeFieldWithValue rec)
 recordToFieldsWithValues rec =

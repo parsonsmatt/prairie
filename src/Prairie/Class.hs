@@ -28,8 +28,6 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable, eqT, (:~:) (..))
 import GHC.OverloadedLabels (IsLabel (..))
 import GHC.TypeLits (Symbol)
-import Data.Functor.Apply (Apply(..))
-import Data.List.NonEmpty (NonEmpty)
 
 import Prairie.Internal (Lens', set, view)
 
