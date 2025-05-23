@@ -28,7 +28,7 @@ diffRecord
     -> rec
     -- ^ The new record.
     -> [Update rec]
-diffRecord old new = foldMap go allFields
+diffRecord old new = foldMap go allFieldsList
   where
     go (SomeField f) =
         withFieldDict @Eq f $

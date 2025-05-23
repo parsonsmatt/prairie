@@ -18,9 +18,11 @@ module Prairie.Class where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
 import Data.Constraint (Dict (..))
+import Data.Functor.Apply (Apply (..))
 import Data.Functor.Const (Const (..))
 import Data.Functor.Identity (Identity (..))
 import Data.Kind (Constraint, Type)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
@@ -105,6 +107,10 @@ class Record rec where
     -- @since 0.0.2.0
     tabulateRecordA :: (Applicative m) => (forall ty. Field rec ty -> m ty) -> m rec
 
+    -- | Like 'tabulateRecordA', but this only requires 'Apply', which
+    -- allows you to use 'Foldable1' and 'NonEmpty'.
+    tabulateRecordApply :: (Apply m) => (forall ty. Field rec ty -> m ty) -> m rec
+
     -- | Assign a 'Text' label for a record 'Field'.
     --
     -- This allows 'Field's to be converted to 'Text', which is useful for
@@ -124,13 +130,38 @@ class Record rec where
 -- This value builds the fields using 'tabulateRecordA' and the 'Const'
 -- type.
 --
--- As of @0.0.2.0,@ this is an ordinary top-level function and not a class
+-- As of @0.0.2.0@, this is an ordinary top-level function and not a class
 -- member.
 --
+-- As of @0.1.0.0@, this functions works for any 'Semigroup' and
+-- 'Applicative', allowing you to use it to create both a list and
+-- a 'NonEmpty' list for it. Since this may result in ambiguity, we offer
+-- 'allFieldsList' and 'allFieldsNonEmpty' as aliases with fixed types.
+--
 -- @since 0.0.1.0
-allFields :: (Record rec) => [SomeField rec]
-allFields = getConst $ tabulateRecordA $ \field ->
-    Const [SomeField field]
+allFields
+    :: (Record rec, forall a. Semigroup (f a), Applicative f)
+    => f (SomeField rec)
+allFields = getConst $ tabulateRecordApply $ \field ->
+    Const (pure (SomeField field))
+
+-- | Like 'allFields' but with the type specialized to lists.
+--
+-- @since 0.1.0.0
+allFieldsList
+    :: (Record rec)
+    => [SomeField rec]
+allFieldsList =
+    allFields
+
+-- | Like 'allFields' but with the type specialized to 'NonEmpty' lists.
+--
+-- @since 0.1.0.0
+allFieldsNonEmpty
+    :: (Record rec)
+    => NonEmpty (SomeField rec)
+allFieldsNonEmpty =
+    allFields
 
 -- | This function allows you to construct a 'Record' by providing
 -- a value for each 'Field' on the record.
@@ -145,11 +176,11 @@ tabulateRecord k = runIdentity (tabulateRecordA (Identity . k))
 -- 'SomeField' for that record.
 --
 -- @since 0.0.1.0
-fieldMap :: (Record rec) => Map Text (SomeField rec)
+fieldMap :: forall rec. (Record rec) => Map Text (SomeField rec)
 fieldMap =
     foldMap
         (\sf@(SomeField f) -> Map.singleton (recordFieldLabel f) sf)
-        allFields
+        (allFields @rec @[])
 
 -- | Use a 'Field' to access the corresponding value in the record.
 --

@@ -24,12 +24,12 @@ module Main where
 
 import Prairie
 
-import Control.Lens
+import Control.Lens hiding ((<.>))
 import Control.Monad
 import Data.Aeson
-import Data.Kind (Type)
+import Data.Functor.Apply (Apply (..))
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid
-import GHC.Records
 import Prairie.AsRecord
 import Test.Hspec
 
@@ -41,6 +41,7 @@ mkRecord ''User
 deriving instance Eq (Field User a)
 deriving instance Show (Field User a)
 
+exampleUser :: User
 exampleUser = User "Alice" 30
 
 data Foo = Foo
@@ -67,20 +68,11 @@ instance Record (T a) where
 
     tabulateRecordA f = T <$> f TX <*> f TY
 
+    tabulateRecordApply f = (T <$> f TX) <.> f TY
+
     recordFieldLabel = \case
         TX -> "TX"
         TY -> "TY"
-
-class PolyLens t where
-    polyLens :: (forall x. Field (t x) x) -> Lens (t a) (t b) a b
-
-instance PolyLens T where
-    polyLens = \case
-        TX -> lens x (\o n -> o{x = n}) :: Lens (T a) (T b) a b
-
-type family FieldLens (a :: Type) (p :: Type) (f :: Type -> Type) where
-    FieldLens (Field (t x) x) y f = LensLike f (t x) (t y) x y
-    FieldLens (Field (t x) y) y f = LensLike f (t x) (t x) y y
 
 main :: IO ()
 main = hspec $ do
@@ -95,13 +87,6 @@ main = hspec $ do
         it "label" $ do
             recordFieldLabel UserName `shouldBe` "name"
 
-        let
-            t :: T Int
-            t = T 3 2
-
-            t' :: T Char
-            t' = t & polyLens TX .~ 'a'
-
         it "update json" $
             encode (diffRecord exampleUser (setRecordField UserName "Bob" exampleUser))
                 `shouldBe` "[{\"field\":\"name\",\"value\":\"Bob\"}]"
@@ -114,20 +99,32 @@ main = hspec $ do
             user' <-
                 tabulateRecordA $ \case
                     UserName ->
-                        print 10 >> pure "Matt"
+                        print @Int 10 >> pure "Matt"
                     UserAge ->
-                        print 20 >> pure 33
+                        print @Int 20 >> pure 33
             user'
                 `shouldBe` User
                     { name = "Matt"
                     , age = 33
                     }
 
+        it "tabulateRecordApply" do
+            user' <-
+                tabulateRecordApply $ \case
+                    UserName ->
+                        print (10 :: Int) >> pure "Matt"
+                    UserAge ->
+                        print (20 :: Int) >> pure 33
+            user'
+                `shouldBe` User
+                    { name = "Matt"
+                    , age = 33
+                    }
         describe "Fold" $ do
             describe "foldRecord" $ do
                 it "can count the fields" $ do
                     foldRecord (\_val acc _field -> acc + 1) 0 exampleUser
-                        `shouldBe` 2
+                        `shouldBe` (2 :: Int)
                 it "can distinguish fields" $ do
                     foldRecord
                         ( \val acc field ->
@@ -142,9 +139,12 @@ main = hspec $ do
                         `shouldBe` 35
 
             describe "foldMapRecord" $ do
+                it "can make a nonempty list" $ do
+                    foldMapRecord (\_ _ -> pure 'a') exampleUser
+                        `shouldBe` ('a' :| "a")
                 it "can count the fields" $ do
                     foldMapRecord (\_ _ -> Sum 1) exampleUser
-                        `shouldBe` Sum 2
+                        `shouldBe` Sum (2 :: Integer)
                 it "can combine strings" $ do
                     foldMapRecord
                         ( \val ->
