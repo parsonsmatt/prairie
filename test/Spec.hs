@@ -18,7 +18,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wall -Werror=unused-type-patterns #-}
 
 module Main where
 
@@ -58,7 +58,7 @@ deriving via AsRecord Foo instance Monoid Foo
 data T a = T {x :: a, y :: Int}
 
 instance Record (T a) where
-    data Field (T a) t where
+    data Field (T a) _ where
         TX :: Field (T a) a
         TY :: Field (T a) Int
 

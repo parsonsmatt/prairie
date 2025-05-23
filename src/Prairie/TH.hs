@@ -219,7 +219,7 @@ mkRecord u = do
                 ( [ DataInstD
                         []
                         Nothing
-                        (ConT ''Field `AppT` ConT typeName `AppT` VarT (mkName "a"))
+                        (ConT ''Field `AppT` ConT typeName `AppT` VarT (mkName "_"))
                         Nothing
                         fieldConstrs
                         []
