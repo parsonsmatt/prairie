@@ -7,8 +7,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+#if MIN_VERSION_base(4,16,0)
 {-# LANGUAGE NoFieldSelectors #-}
+#endif
 
 module Prairie.NoFieldSelectorSpec where
 
