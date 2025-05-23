@@ -16,6 +16,7 @@
       This allows you to define records that are constructed on a per-field basis in some effect type.
 - [#23](https://github.com/parsonsmatt/prairie/pull/23)
     - Generated code is no longer ambiguous or faulty in the case of `NoFieldSelectors` or `DuplicateRecordFields`.
+    - `mkRecord` now requires `TypeApplications` to compile.
 
 ## 0.0.4.1
 
