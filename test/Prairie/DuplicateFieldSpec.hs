@@ -1,20 +1,20 @@
-{-# language DuplicateRecordFields #-}
-{-# language TemplateHaskell #-}
-{-# language DataKinds #-}
-{-# language TypeFamilies #-}
-{-# language FlexibleInstances #-}
-{-# language MultiParamTypeClasses #-}
-{-# language UndecidableInstances #-}
-{-# language GADTs #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Prairie.DuplicateFieldSpec where
 
 import Prairie
 
-data User = User { name :: String }
+data User = User {name :: String}
 
 mkRecord ''User
 
-data Dog = Dog { name :: String }
+data Dog = Dog {name :: String}
 
 mkRecord ''Dog
