@@ -5,6 +5,7 @@
 -- @since 0.0.1.0
 module Prairie.TH where
 
+import GHC.Records (getField)
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
 import Data.Functor.Apply (Apply (..))
@@ -126,10 +127,13 @@ mkRecord u = do
                         (compatConP (mkConstrFieldName fieldName))
                         ( NormalB $
                             VarE 'lens
-                                `AppE` VarE fieldName
+                                `AppE` (VarE 'getField `AppTypeE` LitT (StrTyLit (nameBase fieldName)))
                                 `AppE` LamE
                                     [VarP recVar, VarP newVal]
-                                    (RecUpdE (VarE recVar) [(fieldName, VarE newVal)])
+                                    (SigE
+                                        (RecUpdE (VarE recVar) [(fieldName, VarE newVal)])
+                                        (ConT typeName)
+                                    )
                         )
                         []
         body <- CaseE (VarE arg) <$> traverse mkMatch names'types
