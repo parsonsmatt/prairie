@@ -5,13 +5,13 @@
 -- @since 0.0.1.0
 module Prairie.TH where
 
-import GHC.Records (getField)
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
 import Data.Functor.Apply (Apply (..))
 import qualified Data.List as List
 import qualified Data.Text as Text
 import Data.Traversable (for)
+import GHC.Records (getField)
 import Language.Haskell.TH
 
 import Prairie.Class
@@ -130,7 +130,7 @@ mkRecord u = do
                                 `AppE` (VarE 'getField `AppTypeE` LitT (StrTyLit (nameBase fieldName)))
                                 `AppE` LamE
                                     [VarP recVar, VarP newVal]
-                                    (SigE
+                                    ( SigE
                                         (RecUpdE (VarE recVar) [(fieldName, VarE newVal)])
                                         (ConT typeName)
                                     )
