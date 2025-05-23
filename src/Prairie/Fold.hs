@@ -8,6 +8,8 @@
 -- @since 0.0.3.0
 module Prairie.Fold where
 
+import Data.Foldable1
+import Data.List.NonEmpty (NonEmpty)
 import Control.Monad (foldM)
 import Data.List (foldl')
 import Prairie.Class
@@ -23,7 +25,25 @@ data SomeFieldWithValue rec where
 --
 -- @since 0.0.3.0
 recordToFieldList :: forall rec. (Record rec) => rec -> [SomeFieldWithValue rec]
-recordToFieldList rec =
+recordToFieldList = recordToFieldsWithValues
+
+-- | Convert a 'Record' into a 'NonEmpty' list of the records fields paired with the
+-- value for that record.
+--
+-- @since 0.0.3.0
+recordToFieldListNonEmpty :: forall rec. (Record rec) => rec -> NonEmpty (SomeFieldWithValue rec)
+recordToFieldListNonEmpty = recordToFieldsWithValues
+
+-- | Like 'recordToFieldList', but works for any 'Applicative' that's also
+-- a 'Semigroup' - this means you can use this at the @[]@ type of
+-- 'NonEmpty'.
+--
+-- @since 0.1.0.0
+recordToFieldsWithValues
+    :: forall rec f. (Record rec, forall a. Semigroup (f a), Applicative f)
+    => rec
+    -> f (SomeFieldWithValue rec)
+recordToFieldsWithValues rec =
     fmap
         ( \(SomeField field) ->
             SomeFieldWithValue field (getRecordField field rec)
@@ -94,15 +114,18 @@ foldMRecord k init rec =
         init
         (recordToFieldList rec)
 
--- | Convert each field of a 'Record' into a monoidal value and combine
--- them together using 'mappend'.
+-- | Convert each field of a 'Record' into a semigroup value and combine
+-- them together using '(<>)'.
+--
+-- As of @0.1.0.0@, this function was relaxed from a 'Monoid' constraint to
+-- a 'Semigroup' constraint, allowing you to construct more types.
 --
 -- @since 0.0.3.0
 foldMapRecord
     :: forall rec m
-     . (Record rec, Monoid m)
+     . (Record rec, Semigroup m)
     => (forall ty. ty -> Field rec ty -> m)
     -> rec
     -> m
 foldMapRecord k rec =
-    foldMap (\(SomeFieldWithValue f v) -> k v f) (recordToFieldList rec)
+    foldMap1 (\(SomeFieldWithValue f v) -> k v f) (recordToFieldListNonEmpty rec)

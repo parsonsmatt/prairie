@@ -4,6 +4,7 @@
 -- @since 0.0.3.0
 module Prairie.Traverse where
 
+import Data.Foldable (traverse_)
 import Control.Applicative (liftA2)
 import Data.List (foldl')
 import Prairie.Class
@@ -65,3 +66,70 @@ traverseRecord f init =
             (\(SomeFieldWithValue field' val') rec -> setRecordField field' val' rec)
             (f' field val)
             frec
+
+-- | Like 'traverseRecord', but throws away it's result. This is slightly
+-- more efficient than @'void' $ 'traverseRecord' f@.
+--
+-- @since 0.1.0.0
+traverseRecord_
+    :: forall rec f
+     . (Record rec, Applicative f)
+    => (forall ty. ty -> Field rec ty -> f ())
+    -> rec
+    -> f ()
+traverseRecord_ f init =
+    traverse_ (\(SomeFieldWithValue field val) -> f val field) (recordToFieldList init)
+
+-- | This function produces a container resulting from running the given
+-- function on every field of a record.
+--
+-- @since 0.1.0.0
+traverseFields
+    :: forall rec m f a
+     . (Record rec, Applicative m, forall x. Semigroup (f x), Traversable f, Applicative f)
+    => (forall ty. Field rec ty -> m a)
+    -> m (f a)
+traverseFields k =
+    traverse (\(SomeField f)  -> k f) (allFields @rec)
+
+-- | Like 'traverseFields', but just runs the given action on every field.
+-- Does not return any values, so only useful for enumerating side-effects.
+--
+-- @since 0.1.0.0
+traverseFields_ ::
+  forall rec m.
+  (Record rec, Applicative m) =>
+  (forall ty. Field rec ty -> m ()) ->
+  m ()
+traverseFields_ f =
+  traverse_ (\(SomeField field) -> f field) (allFields @rec @[])
+
+-- | Collect results of running the provided callback over each field, with
+-- a specific constraint being allowed on each field. Allows you to operate
+-- somewhat generically over the record fields.
+--
+-- @since 0.1.0.0
+traverseFieldsWithDict ::
+  forall r c f t a.
+  (FieldDict c r, Applicative f, forall a. Semigroup (t a), Applicative t, Traversable t) =>
+  (forall x. c x => Field r x -> f a) ->
+  f (t a)
+traverseFieldsWithDict f =
+  traverse
+    ((\(SomeField field) -> withFieldDict @c @r field (f field)) :: SomeField r -> f a)
+    allFields
+
+-- | Lke 'traverseFieldsWithDict', but throws away the result values.
+-- Useful when you want to enumerate all fields and perform
+-- a side-effecting function for each field.
+--
+-- @since 0.1.0.0
+traverseFieldsWithDict_ ::
+  forall r c f.
+  (FieldDict c r, Applicative f) =>
+  (forall x. c x => Field r x -> f ()) ->
+  f ()
+traverseFieldsWithDict_ f =
+  traverse_
+    ((\(SomeField field) -> withFieldDict @c @r field (f field)) :: SomeField r -> f ())
+    (allFields @r @[])

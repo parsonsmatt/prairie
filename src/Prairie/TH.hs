@@ -5,6 +5,7 @@
 -- @since 0.0.1.0
 module Prairie.TH where
 
+import Data.Functor.Apply
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
 import qualified Data.List as List
@@ -99,7 +100,12 @@ mkRecord u = do
 
     (recordCon, names'types) <-
         case con of
-            RecC conName varBangTypes ->
+            RecC conName varBangTypes -> do
+                case varBangTypes of
+                    [] ->
+                        reportError "Prairie records must have at least one field."
+                    _ ->
+                        pure ()
                 pure $ (conName, map (\(n, _b, t) -> (n, t)) varBangTypes)
             _ ->
                 fail "only supports records"
@@ -153,6 +159,28 @@ mkRecord u = do
                 [ Clause [VarP fromFieldName] (NormalB body) []
                 ]
 
+    mkTabulateRecordApply <- do
+        fromFieldName <- newName "fromField"
+        let
+            body =
+                fst $
+                List.foldl'
+                    ( \(acc, op) fromField ->
+                        (InfixE (Just acc) op (Just fromField)
+                        , VarE '(<.>)
+                        )
+                    )
+                    (ConE recordCon, VarE '(<$>))
+                    fromFieldNames
+            fromFieldNames =
+                map (AppE (VarE fromFieldName) . ConE . mkConstrFieldName . fst) names'types
+
+        pure $
+            FunD
+                'tabulateRecordApply
+                [ Clause [VarP fromFieldName] (NormalB body) []
+                ]
+
     mkRecordFieldLabel <- do
         fieldName <- newName "fieldName"
         body <- pure $
@@ -197,6 +225,7 @@ mkRecord u = do
                         []
                   , recordFieldLensDec
                   , mkTabulateRecord
+                  , mkTabulateRecordApply
                   , mkRecordFieldLabel
                   ]
                 )
