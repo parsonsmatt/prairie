@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoFieldSelectors #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module Prairie.NoFieldSelectorSpec where
 
