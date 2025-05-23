@@ -5,7 +5,6 @@
 -- @since 0.0.1.0
 module Prairie.TH where
 
-import Data.Functor.Apply
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
 import qualified Data.List as List
@@ -164,14 +163,14 @@ mkRecord u = do
         let
             body =
                 fst $
-                List.foldl'
-                    ( \(acc, op) fromField ->
-                        (InfixE (Just acc) op (Just fromField)
-                        , VarE '(<.>)
+                    List.foldl'
+                        ( \(acc, op) fromField ->
+                            ( InfixE (Just acc) op (Just fromField)
+                            , VarE '(<.>)
+                            )
                         )
-                    )
-                    (ConE recordCon, VarE '(<$>))
-                    fromFieldNames
+                        (ConE recordCon, VarE '(<$>))
+                        fromFieldNames
             fromFieldNames =
                 map (AppE (VarE fromFieldName) . ConE . mkConstrFieldName . fst) names'types
 
