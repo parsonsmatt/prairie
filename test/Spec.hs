@@ -31,8 +31,8 @@ import Data.Functor.Apply (Apply (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid
 import Prairie.AsRecord
-import Test.Hspec
 import qualified Prairie.DistributedSpec
+import Test.Hspec
 
 data User = User {name :: String, age :: Int}
     deriving (Show, Eq)

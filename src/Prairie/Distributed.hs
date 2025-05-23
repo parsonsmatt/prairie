@@ -20,12 +20,12 @@
 -- @since 0.1.0.0
 module Prairie.Distributed where
 
-import GHC.Records
 import Data.Functor.Apply (Apply (..))
 import Data.Functor.Const (Const (..))
 import Data.Functor.Identity (Identity (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Text (Text)
+import GHC.Records
 import Prairie.Class
 
 -- | A @'Distributed' f rec@ is a 'Record' with fields that are wrapped in
@@ -73,7 +73,8 @@ instance (SymbolToField sym rec typ) => HasField sym (Distributed f rec) (f typ)
 -- | Use a @'Field' rec ty@ to access that field in the @'Distributed' f rec@.
 --
 -- @since 0.1.0.0
-getRecordFieldDistributed :: (Record rec) => Field rec ty -> Distributed f rec -> f ty
+getRecordFieldDistributed
+    :: (Record rec) => Field rec ty -> Distributed f rec -> f ty
 getRecordFieldDistributed field (Distributed k) =
     k field
 
@@ -83,7 +84,7 @@ getRecordFieldDistributed field (Distributed k) =
 -- @since 0.1.0.0
 buildDistributed
     :: forall f rec
-    . (forall ty. Field rec ty -> f ty)
+     . (forall ty. Field rec ty -> f ty)
     -> Distributed f rec
 buildDistributed k = Distributed k
 
@@ -91,7 +92,8 @@ buildDistributed k = Distributed k
 -- 'Applicative'.
 --
 -- @since 0.1.0.0
-distribute :: forall f rec. (Applicative f, Record rec) => rec -> Distributed f rec
+distribute
+    :: forall f rec. (Applicative f, Record rec) => rec -> Distributed f rec
 distribute rec = Distributed \field ->
     pure (getRecordField field rec)
 
