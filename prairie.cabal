@@ -89,6 +89,8 @@ test-suite prairie-test
   main-is: Spec.hs
   other-modules:
       Paths_prairie
+      Prairie.DuplicateFieldSpec
+      Prairie.NoFieldSelectorSpec
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
