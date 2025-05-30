@@ -28,26 +28,6 @@ import Data.Text (Text)
 import GHC.Records
 import Prairie.Class
 
--- | A @'Distributed' f rec@ is a 'Record' with fields that are wrapped in
--- the @f@ type constructor.
---
--- The simplest example is the trivial 'Identity' - @'Distributed'
--- 'Identity' rec@ wraps each field in 'Identity', which doesn't do
--- anything.
---
--- But you can also represent a @'Distributed' 'IO' rec@, where each field
--- is an 'IO' action.
---
--- This type is equivalently powerful to the @Higher Kinded Data@ pattern,
--- but significantly more flexible, since you don't need to munge the
--- underlying datatype with the complexity of this.
---
--- You can use @OverloadedRecordDot@ to access fields on this directly, or
--- you can also use 'getRecordFieldDistributed'.
---
--- @since 0.1.0.0
-newtype Distributed f rec = Distributed (forall x. Field rec x -> f x)
-
 -- |  This instance allows you to use the @OverloadedRecordDot@ with
 -- distributed records.
 --

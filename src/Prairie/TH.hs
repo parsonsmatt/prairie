@@ -8,6 +8,7 @@ module Prairie.TH where
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
 import Data.Functor.Apply (Apply (..))
+import Data.Functor.Compose
 import qualified Data.List as List
 import qualified Data.Text as Text
 import Data.Traversable (for)
@@ -185,6 +186,37 @@ mkRecord u = do
                 [ Clause [VarP fromFieldName] (NormalB body) []
                 ]
 
+    mkSequenceRecordA <- do
+        fromFieldName <- newName "s"
+        let
+            mkMatch (VarP lamArg) (fieldName, _typ) = do
+                let
+                    pat = compatConP $ mkConstrFieldName fieldName
+                 in
+                    Match pat (NormalB (VarE lamArg)) []
+        lambda <- do
+            vars <- traverse (fmap VarP . newName . nameBase . fst) names'types
+            pure $
+                LamE
+                    vars
+                    (ConE 'Distributed `AppE` LamCaseE (List.zipWith mkMatch vars names'types))
+        let
+            body =
+                List.foldl'
+                    ( \acc (n, _) ->
+                        VarE '(<*>)
+                            `AppE` acc
+                            `AppE` (VarE 'getCompose `AppE` (VarE fromFieldName `AppE` ConE (mkConstrFieldName n)))
+                    )
+                    (VarE 'pure `AppE` lambda)
+                    names'types
+
+        pure $
+            FunD
+                'sequenceRecordA
+                [ Clause [compatConP' 'Distributed [VarP fromFieldName]] (NormalB body) []
+                ]
+
     mkRecordFieldLabel <- do
         fieldName <- newName "fieldName"
         body <- pure $
@@ -230,6 +262,7 @@ mkRecord u = do
                   , recordFieldLensDec
                   , mkTabulateRecord
                   , mkTabulateRecordApply
+                  , mkSequenceRecordA
                   , mkRecordFieldLabel
                   ]
                 )
@@ -290,4 +323,13 @@ compatConP constrFieldName =
 #else
 compatConP constrFieldName =
     ConP constrFieldName []
+#endif
+
+compatConP' :: Name -> [Pat] -> Pat
+#if MIN_VERSION_template_haskell(2,18,0)
+compatConP' constrFieldName ps =
+    ConP constrFieldName [] ps
+#else
+compatConP' constrFieldName ps  =
+    ConP constrFieldName ps 
 #endif
