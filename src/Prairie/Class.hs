@@ -1,5 +1,3 @@
-{-# LANGUAGE ImpredicativeTypes #-}
-
 -- | This module defines the type class 'Record' which enables much of the
 -- functionality of the library. You can define instances of this record
 -- manually, or you may use the @TemplateHaskell@ deriving function in
