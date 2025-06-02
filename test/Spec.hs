@@ -28,6 +28,7 @@ import Control.Lens hiding ((<.>))
 import Control.Monad
 import Data.Aeson
 import Data.Functor.Apply (Apply (..))
+import Data.Functor.Compose
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid
 import Prairie.AsRecord
@@ -120,6 +121,18 @@ main = hspec $ do
                     { name = "Matt"
                     , age = 33
                     }
+
+        it "sequenceRecordA" $ do
+            Distributed user' <- do
+                sequenceRecordA @User @IO @Maybe $ Distributed \case
+                    UserName -> Compose do
+                        print @Int 10 >> pure (Just "Matt")
+                    UserAge -> Compose do
+                        print @Int 20 >> pure Nothing
+            user' UserName `shouldBe` Just "Matt"
+            user' UserAge `shouldBe` Nothing
+            tabulateRecordA user' `shouldBe` Nothing
+
         describe "Fold" $ do
             describe "foldRecord" $ do
                 it "can count the fields" $ do

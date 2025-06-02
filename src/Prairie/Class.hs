@@ -19,6 +19,7 @@ module Prairie.Class where
 import Data.Aeson (FromJSON (..), ToJSON (..), withText)
 import Data.Constraint (Dict (..))
 import Data.Functor.Apply (Apply (..))
+import Data.Functor.Compose (Compose)
 import Data.Functor.Const (Const (..))
 import Data.Functor.Identity (Identity (..))
 import Data.Kind (Constraint, Type)
@@ -30,7 +31,6 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable, eqT, (:~:) (..))
 import GHC.OverloadedLabels (IsLabel (..))
 import GHC.TypeLits (Symbol)
-
 import Prairie.Internal (Lens', set, view)
 
 -- | Instances of this class have a datatype 'Field' which allow you to
@@ -88,6 +88,10 @@ class Record rec where
     -- |  Construct a 'Record' by providing an 'Applicative' action
     -- returning a value for each 'Field' on the 'Record'.
     --
+    -- Valid input functions are written in the "function format" of the record, contrasting
+    -- the @f@-wrapped "data format" of its return type: the @rec@ value as though it were
+    -- written in Haskell record syntax (that does not support 'Applicative' actions).
+    --
     -- Example:
     --
     -- @
@@ -111,6 +115,19 @@ class Record rec where
     -- allows you to use 'Foldable1' and 'NonEmpty'.
     tabulateRecordApply :: (Apply m) => (forall ty. Field rec ty -> m ty) -> m rec
 
+    -- | Unwrap one 'Applicative' layer of a stack @m (f ty)@ in "function format".
+    -- The resulting @m@-action returns the "function format" in @f@-actions,
+    -- which can then be addressed directly later in the @m@ action without needing
+    -- to tabulate the entire record right away. This is especially useful when the
+    -- inner functor has side-effects worth avoiding, like the concatenating behaviour
+    -- of @'Monoid' m => 'Const' m@ or the validation of 'Maybe' and @'Either' e@
+    -- when the specific field's @m@ or @'Maybe' ty@/@'Either' e ty@ value is of interest
+    -- prior to processing the record entirely through that functor.
+    --
+    -- @since 0.1.1.0
+    sequenceRecordA
+        :: (Applicative m) => Distributed (Compose m f) rec -> m (Distributed f rec)
+
     -- | Assign a 'Text' label for a record 'Field'.
     --
     -- This allows 'Field's to be converted to 'Text', which is useful for
@@ -124,6 +141,26 @@ class Record rec where
     recordFieldLabel :: Field rec ty -> Text
     default recordFieldLabel :: (Show (Field rec ty)) => Field rec ty -> Text
     recordFieldLabel = Text.pack . show
+
+-- | A @'Distributed' f rec@ is a 'Record' with fields that are wrapped in
+-- the @f@ type constructor.
+--
+-- The simplest example is the trivial 'Identity' - @'Distributed'
+-- 'Identity' rec@ wraps each field in 'Identity', which doesn't do
+-- anything.
+--
+-- But you can also represent a @'Distributed' 'IO' rec@, where each field
+-- is an 'IO' action.
+--
+-- This type is equivalently powerful to the @Higher Kinded Data@ pattern,
+-- but significantly more flexible, since you don't need to munge the
+-- underlying datatype with the complexity of this.
+--
+-- You can use @OverloadedRecordDot@ to access fields on this directly, or
+-- you can also use 'getRecordFieldDistributed'.
+--
+-- @since 0.1.0.0
+newtype Distributed f rec = Distributed (forall x. Field rec x -> f x)
 
 -- | An enumeration of fields on the record.
 --
