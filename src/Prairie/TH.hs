@@ -18,6 +18,11 @@ import Language.Haskell.TH
 import Prairie.Class
 import Prairie.Internal (lens)
 
+-- | Like 'mkRecord', but capable of producing instances of 'Record' for
+-- multiple types simultaneously.
+mkRecords :: [Name] -> DecsQ
+mkRecords = fmap concat . traverse mkRecord
+
 -- | Create an instance of the 'Record' type class.
 --
 -- @
