@@ -291,12 +291,14 @@ mkRecord u = do
 
     symbolToFieldInstances <-
         fmap concat $ for names'types $ \(fieldName, typ) -> do
+            retType <- newName "field"
             [d|
                 instance
+                    $(varT retType) ~ $(pure typ) =>
                     SymbolToField
                         $(litT (strTyLit (nameBase fieldName)))
                         $(pure instanceHead)
-                        $(pure typ)
+                        $(varT retType)
                     where
                     symbolToField = $(conE (mkConstrFieldName fieldName))
                 |]
