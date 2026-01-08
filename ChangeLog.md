@@ -2,7 +2,7 @@
 
 ## 0.1.1.1
 
-- []()
+- [#29](https://github.com/parsonsmatt/prairie/pull/29)
     - Bump `template-haskell` bound to 2.25
 
 ## 0.1.1.0
