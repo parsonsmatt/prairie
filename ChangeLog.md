@@ -7,7 +7,6 @@
 - [#29](https://github.com/parsonsmatt/prairie/pull/29)
     - Bump `template-haskell` bound to 2.25
 
-
 ## 0.1.0.0
 
 - [#22](https://github.com/parsonsmatt/prairie/pull/22)
