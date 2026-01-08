@@ -43,7 +43,7 @@ library
     , containers
     , mtl
     , semigroupoids
-    , template-haskell  >=2.15 && <2.24
+    , template-haskell  >=2.15 && <2.25
     , text
     , foldable1-classes-compat
 
