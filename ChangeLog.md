@@ -1,14 +1,12 @@
 # Changelog for prairie
 
-## 0.1.1.1
-
-- [#29](https://github.com/parsonsmatt/prairie/pull/29)
-    - Bump `template-haskell` bound to 2.25
-
 ## 0.1.1.0
 
 - [#24](https://github.com/parsonsmatt/prairie/pull/24)
     - Introduce `sequenceRecordA`, for monadic tabulation of values, using `Distributed`.
+- [#29](https://github.com/parsonsmatt/prairie/pull/29)
+    - Bump `template-haskell` bound to 2.25
+
 
 ## 0.1.0.0
 
