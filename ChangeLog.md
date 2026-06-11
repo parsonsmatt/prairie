@@ -1,5 +1,10 @@
 # Changelog for prairie
 
+## 0.1.2.0
+
+- [#26](https://github.com/parsonsmatt/prairie/pull/26)
+    - `mkRecord` now supports record types with type variables (e.g. `data Box a = Box { contents :: a }`).
+
 ## 0.1.1.0
 
 - [#24](https://github.com/parsonsmatt/prairie/pull/24)

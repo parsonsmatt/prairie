@@ -75,6 +75,14 @@ instance Record (T a) where
         TX -> "TX"
         TY -> "TY"
 
+data Box a b = Box {boxContents :: a, boxLabel :: b, boxPair :: (a, b)}
+    deriving (Show, Eq)
+
+mkRecord ''Box
+
+exampleBox :: Box Int String
+exampleBox = Box 1 "hello" (1, "hello")
+
 main :: IO ()
 main = hspec $ do
     describe "Prairie" $ do
@@ -249,3 +257,16 @@ main = hspec $ do
                     u0
                     u1
                     `shouldBe` User "MattttaM" (35 + 53)
+
+        describe "type variables" do
+            it "can get a field" do
+                getRecordField BoxContents exampleBox `shouldBe` 1
+                getRecordField BoxLabel exampleBox `shouldBe` "hello"
+            it "can set a field" do
+                setRecordField BoxContents 2 exampleBox
+                    `shouldBe` Box 2 "hello" (1, "hello")
+                setRecordField BoxLabel "world" exampleBox
+                    `shouldBe` Box 1 "world" (1, "hello")
+            it "produces field labels" do
+                recordFieldLabel BoxContents `shouldBe` "contents"
+                recordFieldLabel BoxPair `shouldBe` "pair"

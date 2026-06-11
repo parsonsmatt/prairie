@@ -92,6 +92,18 @@ mkRecord u = do
 
     let
         instanceHead = List.foldl' AppT (ConT typeName) $ fmap getTyVarType tyvars
+        -- Annotate a record update with the record's type so that
+        -- @DuplicateRecordFields@ can figure out which field is being set. We
+        -- only do this for monomorphic records: applying the type constructor
+        -- to its variables (e.g. @One a@) in an expression signature would
+        -- introduce fresh, rigid type variables that cannot unify with the
+        -- ones bound by the instance head. For polymorphic records the type of
+        -- the surrounding 'lens' already fixes the record type, so no
+        -- annotation is needed.
+        annotateRecordUpdate e =
+            case tyvars of
+                [] -> SigE e instanceHead
+                _ -> e
         stripTypeName n =
             let
                 typeNamePrefix =
@@ -132,9 +144,8 @@ mkRecord u = do
                                 `AppE` (VarE 'getField `AppTypeE` LitT (StrTyLit (nameBase fieldName)))
                                 `AppE` LamE
                                     [VarP recVar, VarP newVal]
-                                    ( SigE
+                                    ( annotateRecordUpdate
                                         (RecUpdE (VarE recVar) [(fieldName, VarE newVal)])
-                                        instanceHead
                                     )
                         )
                         []
@@ -317,9 +328,17 @@ upperFirst, lowerFirst :: String -> String
 upperFirst = overFirst toUpper
 lowerFirst = overFirst toLower
 
+-- | @template-haskell-2.17@ (GHC 9.0) added a @flag@ parameter to
+-- 'TyVarBndr'; on older versions the constructors have one fewer field.
+#if MIN_VERSION_template_haskell(2,17,0)
 getTyVarType :: TyVarBndr a -> Type
 getTyVarType (PlainTV n _) = VarT n
 getTyVarType (KindedTV n _ _) = VarT n
+#else
+getTyVarType :: TyVarBndr -> Type
+getTyVarType (PlainTV n) = VarT n
+getTyVarType (KindedTV n _) = VarT n
+#endif
 
 compatConP :: Name -> Pat
 #if MIN_VERSION_template_haskell(2,18,0)
