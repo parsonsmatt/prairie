@@ -24,10 +24,8 @@ module Main where
 
 import Prairie
 
-import Control.Lens hiding ((<.>))
 import Control.Monad
 import Data.Aeson
-import Data.Functor.Apply (Apply (..))
 import Data.Functor.Compose
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid
@@ -58,22 +56,7 @@ deriving via AsRecord Foo instance Monoid Foo
 
 data T a = T {x :: a, y :: Int}
 
-instance Record (T a) where
-    data Field (T a) _ where
-        TX :: Field (T a) a
-        TY :: Field (T a) Int
-
-    recordFieldLens = \case
-        TX -> lens x (\o n -> o{x = n})
-        TY -> lens y (\o n -> o{y = n})
-
-    tabulateRecordA f = T <$> f TX <*> f TY
-
-    tabulateRecordApply f = (T <$> f TX) <.> f TY
-
-    recordFieldLabel = \case
-        TX -> "TX"
-        TY -> "TY"
+mkRecord ''T
 
 data Box a b = Box {boxContents :: a, boxLabel :: b, boxPair :: (a, b)}
     deriving (Show, Eq)
