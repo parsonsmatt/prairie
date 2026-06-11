@@ -1,5 +1,13 @@
 # Changelog for prairie
 
+## 0.1.2.0
+
+- [#26](https://github.com/parsonsmatt/prairie/pull/26)
+    - `mkRecord` now supports record types with type variables (e.g. `data Box a = Box { contents :: a }`).
+- [#27](https://github.com/parsonsmatt/prairie/pull/27)
+    - Added `mkRecordWith`, the abstract `PrairieOptions` type, and `defaultPrairieOptions`. `mkRecord` is now `mkRecordWith defaultPrairieOptions` and its generated code is unchanged. The `PrairieOptions` constructor is intentionally not exported, so adding options later is not a breaking change.
+    - `mkRecordWith defaultPrairieOptions { useTypeEquality = True }` generates the `SymbolToField` instances with a `~` equality constraint binding the field type, instead of placing it directly in the instance head. This admits field types that an instance head rejects — most notably type-family applications (e.g. `data Test m = Test { field :: Family m Int }`). It is opt-in because the `~` constraint requires the `TypeOperators` extension at the use site; default `mkRecord` behaviour is unaffected. Using a type-family field without enabling `useTypeEquality` now produces a descriptive error.
+
 ## 0.1.1.0
 
 - [#24](https://github.com/parsonsmatt/prairie/pull/24)

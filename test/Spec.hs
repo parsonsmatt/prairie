@@ -24,10 +24,8 @@ module Main where
 
 import Prairie
 
-import Control.Lens hiding ((<.>))
 import Control.Monad
 import Data.Aeson
-import Data.Functor.Apply (Apply (..))
 import Data.Functor.Compose
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Monoid
@@ -58,22 +56,15 @@ deriving via AsRecord Foo instance Monoid Foo
 
 data T a = T {x :: a, y :: Int}
 
-instance Record (T a) where
-    data Field (T a) _ where
-        TX :: Field (T a) a
-        TY :: Field (T a) Int
+mkRecord ''T
 
-    recordFieldLens = \case
-        TX -> lens x (\o n -> o{x = n})
-        TY -> lens y (\o n -> o{y = n})
+data Box a b = Box {boxContents :: a, boxLabel :: b, boxPair :: (a, b)}
+    deriving (Show, Eq)
 
-    tabulateRecordA f = T <$> f TX <*> f TY
+mkRecord ''Box
 
-    tabulateRecordApply f = (T <$> f TX) <.> f TY
-
-    recordFieldLabel = \case
-        TX -> "TX"
-        TY -> "TY"
+exampleBox :: Box Int String
+exampleBox = Box 1 "hello" (1, "hello")
 
 main :: IO ()
 main = hspec $ do
@@ -249,3 +240,16 @@ main = hspec $ do
                     u0
                     u1
                     `shouldBe` User "MattttaM" (35 + 53)
+
+        describe "type variables" do
+            it "can get a field" do
+                getRecordField BoxContents exampleBox `shouldBe` 1
+                getRecordField BoxLabel exampleBox `shouldBe` "hello"
+            it "can set a field" do
+                setRecordField BoxContents 2 exampleBox
+                    `shouldBe` Box 2 "hello" (1, "hello")
+                setRecordField BoxLabel "world" exampleBox
+                    `shouldBe` Box 1 "world" (1, "hello")
+            it "produces field labels" do
+                recordFieldLabel BoxContents `shouldBe` "contents"
+                recordFieldLabel BoxPair `shouldBe` "pair"
