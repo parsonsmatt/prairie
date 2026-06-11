@@ -3,7 +3,17 @@
 -- | Helpers for generating instances of the 'Record' type class.
 --
 -- @since 0.0.1.0
-module Prairie.TH where
+module Prairie.TH
+    ( -- * Generating @Record@ instances
+      mkRecord
+    , mkRecordWith
+
+      -- * Configuration
+      -- $options
+    , PrairieOptions
+    , defaultPrairieOptions
+    , useTypeEquality
+    ) where
 
 import Data.Char (toLower, toUpper)
 import Data.Constraint (Dict (..))
@@ -75,7 +85,74 @@ import Prairie.Internal (lens)
 --
 -- @since 0.0.1.0
 mkRecord :: Name -> DecsQ
-mkRecord u = do
+mkRecord = mkRecordWith defaultPrairieOptions
+
+-- $options
+--
+-- 'PrairieOptions' is an opaque type. Configure it by record-updating
+-- 'defaultPrairieOptions' using the exported field accessors, e.g.
+--
+-- @
+-- 'defaultPrairieOptions' { 'useTypeEquality' = True }
+-- @
+--
+-- The constructor is intentionally not exported so that future options can
+-- be added without it being a breaking change.
+
+-- | Options controlling how 'mkRecordWith' generates instances.
+--
+-- This type is abstract; see 'defaultPrairieOptions' and the individual field
+-- accessors ('useTypeEquality').
+--
+-- @since 0.1.2.0
+data PrairieOptions = PrairieOptions
+    { useTypeEquality :: Bool
+    -- ^ Generate the 'SymbolToField' instances using a @~@ equality
+    -- constraint to bind the field type, rather than placing the field type
+    -- directly in the instance head:
+    --
+    -- @
+    -- -- with useTypeEquality = False (default):
+    -- instance SymbolToField \"foo\" Rec Ty where ...
+    --
+    -- -- with useTypeEquality = True:
+    -- instance (field ~ Ty) => SymbolToField \"foo\" Rec field where ...
+    -- @
+    --
+    -- This admits field types that are not permitted directly in an instance
+    -- head — most notably type-family applications (e.g. @field :: Family m
+    -- Int@), but anything else that an instance head rejects too. The cost is
+    -- that the calling module must enable the @TypeOperators@ extension, so it
+    -- is off by default: the generated code is then identical to previous
+    -- versions of @prairie@. When it is off and a field is found to use a type
+    -- family, 'mkRecordWith' fails with a descriptive error pointing here.
+    --
+    -- @since 0.1.2.0
+    }
+
+-- | The default 'PrairieOptions'. 'mkRecord' is @'mkRecordWith' 'defaultPrairieOptions'@,
+-- and the generated code is identical to previous versions of @prairie@.
+--
+-- @since 0.1.2.0
+defaultPrairieOptions :: PrairieOptions
+defaultPrairieOptions =
+    PrairieOptions
+        { useTypeEquality = False
+        }
+
+-- | Like 'mkRecord', but with control over code generation via 'PrairieOptions'.
+--
+-- For example, to allow fields whose type is a type-family application:
+--
+-- @
+-- {-\# LANGUAGE TypeOperators \#-}
+--
+-- mkRecordWith defaultPrairieOptions { useTypeEquality = True } ''MyRecord
+-- @
+--
+-- @since 0.1.2.0
+mkRecordWith :: PrairieOptions -> Name -> DecsQ
+mkRecordWith opts u = do
     ty <- reify u
     (typeName, con, tyvars) <-
         case ty of
@@ -300,8 +377,25 @@ mkRecord u = do
                 (ConT ''FieldDict `AppT` VarT constraintVar `AppT` instanceHead)
                 fieldDictDecl
 
-    symbolToFieldInstances <-
-        fmap concat $ for names'types $ \(fieldName, typ) -> do
+    let
+        -- Bind the field type through a @~@ equality constraint. Needed for
+        -- field types that cannot appear directly in an instance head (e.g.
+        -- type-family applications); requires @TypeOperators@ at the use site.
+        equalitySymbolToField fieldName typ = do
+            retType <- newName "field"
+            [d|
+                instance
+                    ($(varT retType) ~ $(pure typ))
+                    => SymbolToField
+                        $(litT (strTyLit (nameBase fieldName)))
+                        $(pure instanceHead)
+                        $(varT retType)
+                    where
+                    symbolToField = $(conE (mkConstrFieldName fieldName))
+                |]
+        -- Place the field type directly in the instance head, exactly as
+        -- @prairie@ always has (no @TypeOperators@ required).
+        directSymbolToField fieldName typ =
             [d|
                 instance
                     SymbolToField
@@ -312,11 +406,81 @@ mkRecord u = do
                     symbolToField = $(conE (mkConstrFieldName fieldName))
                 |]
 
+    symbolToFieldInstances <-
+        fmap concat $ for names'types $ \(fieldName, typ) ->
+            if useTypeEquality opts
+                then equalitySymbolToField fieldName typ
+                else do
+                    -- The direct form can't express a type-family field. Detect
+                    -- that and fail with guidance rather than letting GHC emit a
+                    -- confusing instance-head error.
+                    mentionsFamily <- typeMentionsFamily typ
+                    if mentionsFamily
+                        then fail (typeFamilyFieldError typeName fieldName typ)
+                        else directSymbolToField fieldName typ
+
     pure $
         [ recordInstance
         , fieldDictInstance
         ]
             ++ symbolToFieldInstances
+
+-- | Does this type mention a type or data family anywhere within it? Such
+-- types are not permitted in instance heads, so the generated
+-- 'SymbolToField' instance has to bind them through an equality constraint
+-- instead (see 'allowTypeFamilies'). The walk short-circuits as soon as a
+-- family is found, and expands type synonyms so that a synonym hiding a
+-- family (e.g. @type Foo m = Family m Int@) is still detected.
+typeMentionsFamily :: Type -> Q Bool
+typeMentionsFamily = go
+  where
+    go ty =
+        case ty of
+            ConT n -> isFamily n
+            InfixT a n b -> anyM [isFamily n, go a, go b]
+            UInfixT a n b -> anyM [isFamily n, go a, go b]
+            AppT a b -> anyM [go a, go b]
+            AppKindT a _ -> go a
+            SigT a _ -> go a
+            ParensT a -> go a
+            _ -> pure False
+
+    isFamily n = do
+        info <- reify n
+        case info of
+            FamilyI{} -> pure True
+            -- Type synonyms are not recursive, so this terminates.
+            TyConI (TySynD _ _ rhs) -> go rhs
+            _ -> pure False
+
+    anyM =
+        foldr
+            (\m acc -> m >>= \found -> if found then pure True else acc)
+            (pure False)
+
+-- | The error reported when a field uses a type family but
+-- 'useTypeEquality' has not been enabled.
+typeFamilyFieldError :: Name -> Name -> Type -> String
+typeFamilyFieldError tyName fieldName typ =
+    unlines
+        [ "prairie: the field `"
+            <> nameBase fieldName
+            <> "` of `"
+            <> nameBase tyName
+            <> "` has a type that mentions a type family:"
+        , ""
+        , "    " <> pprint typ
+        , ""
+        , "Generating instances for such a field requires binding the field type"
+        , "with a `~` equality constraint, which means the calling module must"
+        , "enable the TypeOperators extension. Because that is a new requirement,"
+        , "it is opt-in. Enable it like so:"
+        , ""
+        , "    {-# LANGUAGE TypeOperators #-}"
+        , ""
+        , "    mkRecordWith defaultPrairieOptions { useTypeEquality = True } ''"
+            <> nameBase tyName
+        ]
 
 overFirst :: (Char -> Char) -> String -> String
 overFirst f str =
