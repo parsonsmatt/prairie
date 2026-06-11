@@ -92,6 +92,7 @@ test-suite prairie-test
       Prairie.DuplicateFieldSpec
       Prairie.NoFieldSelectorSpec
       Prairie.TypeVariablesSpec
+      Prairie.TypeFamilySpec
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
